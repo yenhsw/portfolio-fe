@@ -43,6 +43,8 @@ export const API_ENDPOINTS = {
   HERO_SECTION_SOCIAL_BY_ID: (id: string) => `/api/admin/hero/social/${id}`,
   HERO_SECTION_AVATAR: '/api/admin/hero/avatar',
   HERO_SECTION_BUTTONS: '/api/admin/hero/buttons',
+  HERO_SECTION_TYPING_STATUS: (id: string) => `/api/admin/hero/typing/${id}/status`,
+  HERO_SECTION_SOCIAL_STATUS: (id: string) => `/api/admin/hero/social/${id}/status`,
 
   // Experience / Career Journey (Home #experience) — `/api/admin/experience/*?type=1`
   EXPERIENCE_ADMIN: '/api/admin/experience',

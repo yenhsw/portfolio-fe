@@ -1,9 +1,10 @@
 // ============================================================
 // HERO SECTION STORE
-// State quản lý section HERO (mock localStorage)
+// State quản lý section HERO — API backend
 // ============================================================
 
 import { Injectable, inject, signal, computed } from '@angular/core';
+import { forkJoin, Observable, finalize, map, of, switchMap, tap, throwError } from 'rxjs';
 import {
   HeroSectionConfig,
   HeroAvatarConfig,
@@ -19,22 +20,8 @@ import {
   MOCK_HERO_TYPING_LINES,
   MOCK_HERO_SOCIAL_LINKS,
 } from '../models/hero-section.model';
+import { HeroPublicAggregate, HeroSectionService } from '../services/hero-section.service';
 import { PlatformService } from '../../../core/services/platform.service';
-
-const STORAGE_KEY = 'portfolio_hero_section_data';
-
-interface HeroSectionData {
-  type: typeof HERO_SECTION_TYPE_CODE;
-  section: HeroSectionConfig;
-  avatar: HeroAvatarConfig;
-  buttons: HeroButtonsConfig;
-  typingLines: HeroTypingLine[];
-  socialLinks: HeroSocialLink[];
-}
-
-function withHeroType<T extends object>(payload: T): T & { type: typeof HERO_SECTION_TYPE_CODE } {
-  return { type: HERO_SECTION_TYPE_CODE, ...payload };
-}
 
 function ensureHeroTypeSection(config: HeroSectionConfig): HeroSectionConfig {
   return { ...config, type: HERO_SECTION_TYPE_CODE };
@@ -56,10 +43,6 @@ function ensureHeroTypeSocialLink(item: HeroSocialLink): HeroSocialLink {
   return { ...item, type: HERO_SECTION_TYPE_CODE };
 }
 
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
 function sortByOrder<T extends { sortOrder: number }>(items: T[]): T[] {
   return [...items].sort((a, b) => a.sortOrder - b.sortOrder);
 }
@@ -68,13 +51,9 @@ function normalizeSortOrder<T extends { sortOrder?: number }>(items: T[]): (T & 
   return items.map((item, index) => ({ ...item, sortOrder: item.sortOrder ?? index + 1 }));
 }
 
-function nextSortOrder(items: { sortOrder: number }[]): number {
-  if (items.length === 0) return 1;
-  return Math.max(...items.map(i => i.sortOrder)) + 1;
-}
-
 @Injectable({ providedIn: 'root' })
 export class HeroSectionStore {
+  private readonly heroService = inject(HeroSectionService);
   private readonly platform = inject(PlatformService);
 
   readonly section = signal<HeroSectionConfig>({ ...DEFAULT_HERO_SECTION });
@@ -84,7 +63,10 @@ export class HeroSectionStore {
   readonly socialLinks = signal<HeroSocialLink[]>([...MOCK_HERO_SOCIAL_LINKS]);
   readonly sectionType = HERO_SECTION_TYPE_CODE;
   readonly loading = signal(false);
-  private loaded = false;
+  readonly saving = signal(false);
+
+  private publicLoaded = false;
+  private adminLoaded = false;
 
   readonly activeTypingLines = computed(() => sortByOrder(this.typingLines().filter(t => t.isActive)));
   readonly activeSocialLinks = computed(() => sortByOrder(this.socialLinks().filter(s => s.isActive)));
@@ -108,135 +90,292 @@ export class HeroSectionStore {
     );
   });
 
+  /** Public Home — `GET /api/public/hero?type=1` */
   load(): void {
-    if (this.loaded) return;
+    if (this.publicLoaded) return;
 
     if (!this.platform.isBrowser) {
-      this.applyMockData();
-      this.loaded = true;
+      this.applyDefaults();
+      this.publicLoaded = true;
       return;
     }
 
     this.loading.set(true);
-    try {
-      const storage = this.platform.localStorage;
-      const raw = storage?.getItem(STORAGE_KEY);
-      if (raw) {
-        const data = JSON.parse(raw) as HeroSectionData;
-        this.section.set(ensureHeroTypeSection(data.section ?? { ...DEFAULT_HERO_SECTION }));
-        this.avatar.set(ensureHeroTypeAvatar(data.avatar ?? { ...DEFAULT_HERO_AVATAR }));
-        this.buttons.set(ensureHeroTypeButtons(data.buttons ?? { ...DEFAULT_HERO_BUTTONS }));
-        this.typingLines.set(
-          normalizeSortOrder(data.typingLines ?? [...MOCK_HERO_TYPING_LINES]).map(ensureHeroTypeTypingLine),
-        );
-        this.socialLinks.set(
-          normalizeSortOrder(data.socialLinks ?? [...MOCK_HERO_SOCIAL_LINKS]).map(ensureHeroTypeSocialLink),
-        );
-      } else {
-        this.applyMockData();
-        this.persist();
-      }
-    } catch {
-      this.applyMockData();
-      this.persist();
-    } finally {
-      this.loading.set(false);
-      this.loaded = true;
+    this.heroService.getPublic().subscribe({
+      next: response => {
+        if (response.success && response.data) {
+          this.applyAggregate(response.data);
+          this.publicLoaded = true;
+        }
+        this.loading.set(false);
+      },
+      error: () => {
+        this.applyDefaults();
+        this.loading.set(false);
+      },
+    });
+  }
+
+  /** Admin panel — parallel admin GET endpoints (Bearer JWT) */
+  loadAdmin(): void {
+    if (this.adminLoaded) return;
+
+    if (!this.platform.isBrowser) {
+      this.applyDefaults();
+      this.adminLoaded = true;
+      return;
+    }
+
+    this.loading.set(true);
+    forkJoin({
+      section: this.heroService.getSection(),
+      avatar: this.heroService.getAvatar(),
+      buttons: this.heroService.getButtons(),
+      typingLines: this.heroService.getTypingLines(),
+      socialLinks: this.heroService.getSocialLinks(),
+    }).subscribe({
+      next: ({ section, avatar, buttons, typingLines, socialLinks }) => {
+        if (section.success && section.data) {
+          this.section.set(ensureHeroTypeSection(section.data));
+        }
+        if (avatar.success && avatar.data) {
+          this.avatar.set(ensureHeroTypeAvatar(avatar.data));
+        }
+        if (buttons.success && buttons.data) {
+          this.buttons.set(ensureHeroTypeButtons(buttons.data));
+        }
+        if (typingLines.success && typingLines.data) {
+          this.typingLines.set(normalizeSortOrder(typingLines.data).map(ensureHeroTypeTypingLine));
+        }
+        if (socialLinks.success && socialLinks.data) {
+          this.socialLinks.set(normalizeSortOrder(socialLinks.data).map(ensureHeroTypeSocialLink));
+        }
+        this.adminLoaded = true;
+        this.loading.set(false);
+      },
+      error: () => {
+        this.applyDefaults();
+        this.loading.set(false);
+      },
+    });
+  }
+
+  saveSection(config: HeroSectionConfig, avatar: HeroAvatarConfig): Observable<void> {
+    this.saving.set(true);
+    const sectionPayload = ensureHeroTypeSection(config);
+    const avatarPayload = ensureHeroTypeAvatar(avatar);
+
+    return forkJoin({
+      section: this.heroService.updateSection(sectionPayload),
+      avatar: this.heroService.updateAvatar(avatarPayload),
+    }).pipe(
+      tap(({ section, avatar: avatarRes }) => {
+        if (section.success && section.data) {
+          this.section.set(ensureHeroTypeSection(section.data));
+        }
+        if (avatarRes.success && avatarRes.data) {
+          this.avatar.set(ensureHeroTypeAvatar(avatarRes.data));
+        }
+        this.publicLoaded = false;
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  saveButtons(config: HeroButtonsConfig): Observable<void> {
+    this.saving.set(true);
+    const payload = ensureHeroTypeButtons(config);
+
+    return this.heroService.updateButtons(payload).pipe(
+      tap(response => {
+        if (response.success && response.data) {
+          this.buttons.set(ensureHeroTypeButtons(response.data));
+          this.publicLoaded = false;
+        }
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  addTypingLine(data: HeroTypingFormData, isActive = true): Observable<void> {
+    this.saving.set(true);
+    return this.heroService.createTypingLine(data).pipe(
+      switchMap(response => {
+        if (!response.success || !response.data) {
+          return throwError(() => ({ message: response.message || 'Failed to create typing line' }));
+        }
+        if (!isActive) {
+          return this.heroService.setTypingLineStatus(response.data.id, false);
+        }
+        return of(response);
+      }),
+      tap(response => {
+        if (response.success && response.data) {
+          this.upsertTypingLine(response.data);
+          this.publicLoaded = false;
+        }
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  updateTypingLine(id: string, data: HeroTypingFormData, isActive: boolean): Observable<void> {
+    this.saving.set(true);
+    return this.heroService.updateTypingLine(id, data).pipe(
+      switchMap(response => {
+        if (!response.success) {
+          return throwError(() => ({ message: response.message || 'Failed to update typing line' }));
+        }
+        return this.heroService.setTypingLineStatus(id, isActive);
+      }),
+      tap(response => {
+        if (response.success && response.data) {
+          this.upsertTypingLine(response.data);
+          this.publicLoaded = false;
+        }
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  deleteTypingLine(id: string): Observable<void> {
+    this.saving.set(true);
+    return this.heroService.deleteTypingLine(id).pipe(
+      tap(() => {
+        this.typingLines.update(items => items.filter(t => t.id !== id));
+        this.publicLoaded = false;
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  setTypingLineStatus(id: string, isActive: boolean): Observable<void> {
+    this.saving.set(true);
+    return this.heroService.setTypingLineStatus(id, isActive).pipe(
+      tap(response => {
+        if (response.success && response.data) {
+          this.upsertTypingLine(response.data);
+          this.publicLoaded = false;
+        }
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  addSocialLink(data: HeroSocialFormData, isActive = true): Observable<void> {
+    this.saving.set(true);
+    return this.heroService.createSocialLink(data).pipe(
+      switchMap(response => {
+        if (!response.success || !response.data) {
+          return throwError(() => ({ message: response.message || 'Failed to create social link' }));
+        }
+        if (!isActive) {
+          return this.heroService.setSocialLinkStatus(response.data.id, false);
+        }
+        return of(response);
+      }),
+      tap(response => {
+        if (response.success && response.data) {
+          this.upsertSocialLink(response.data);
+          this.publicLoaded = false;
+        }
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  updateSocialLink(id: string, data: HeroSocialFormData, isActive: boolean): Observable<void> {
+    this.saving.set(true);
+    return this.heroService.updateSocialLink(id, data).pipe(
+      switchMap(response => {
+        if (!response.success) {
+          return throwError(() => ({ message: response.message || 'Failed to update social link' }));
+        }
+        return this.heroService.setSocialLinkStatus(id, isActive);
+      }),
+      tap(response => {
+        if (response.success && response.data) {
+          this.upsertSocialLink(response.data);
+          this.publicLoaded = false;
+        }
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  deleteSocialLink(id: string): Observable<void> {
+    this.saving.set(true);
+    return this.heroService.deleteSocialLink(id).pipe(
+      tap(() => {
+        this.socialLinks.update(items => items.filter(s => s.id !== id));
+        this.publicLoaded = false;
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  setSocialLinkStatus(id: string, isActive: boolean): Observable<void> {
+    this.saving.set(true);
+    return this.heroService.setSocialLinkStatus(id, isActive).pipe(
+      tap(response => {
+        if (response.success && response.data) {
+          this.upsertSocialLink(response.data);
+          this.publicLoaded = false;
+        }
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  private upsertTypingLine(item: HeroTypingLine): void {
+    const normalized = ensureHeroTypeTypingLine(item);
+    this.typingLines.update(items => {
+      const exists = items.some(t => t.id === normalized.id);
+      const next = exists
+        ? items.map(t => (t.id === normalized.id ? normalized : t))
+        : [...items, normalized];
+      return sortByOrder(next);
+    });
+  }
+
+  private upsertSocialLink(item: HeroSocialLink): void {
+    const normalized = ensureHeroTypeSocialLink(item);
+    this.socialLinks.update(items => {
+      const exists = items.some(s => s.id === normalized.id);
+      const next = exists
+        ? items.map(s => (s.id === normalized.id ? normalized : s))
+        : [...items, normalized];
+      return sortByOrder(next);
+    });
+  }
+
+  private applyAggregate(data: HeroPublicAggregate): void {
+    if (data.section) this.section.set(ensureHeroTypeSection(data.section));
+    if (data.avatar) this.avatar.set(ensureHeroTypeAvatar(data.avatar));
+    if (data.buttons) this.buttons.set(ensureHeroTypeButtons(data.buttons));
+    if (data.typingLines) {
+      this.typingLines.set(normalizeSortOrder(data.typingLines).map(ensureHeroTypeTypingLine));
+    }
+    if (data.socialLinks) {
+      this.socialLinks.set(normalizeSortOrder(data.socialLinks).map(ensureHeroTypeSocialLink));
     }
   }
 
-  private applyMockData(): void {
+  private applyDefaults(): void {
     this.section.set({ ...DEFAULT_HERO_SECTION });
     this.avatar.set({ ...DEFAULT_HERO_AVATAR });
     this.buttons.set({ ...DEFAULT_HERO_BUTTONS });
     this.typingLines.set([...MOCK_HERO_TYPING_LINES]);
     this.socialLinks.set([...MOCK_HERO_SOCIAL_LINKS]);
-  }
-
-  private persist(): void {
-    if (!this.platform.isBrowser) return;
-    const storage = this.platform.localStorage;
-    if (!storage) return;
-
-    const data: HeroSectionData = {
-      type: HERO_SECTION_TYPE_CODE,
-      section: this.section(),
-      avatar: this.avatar(),
-      buttons: this.buttons(),
-      typingLines: this.typingLines(),
-      socialLinks: this.socialLinks(),
-    };
-    storage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }
-
-  saveSection(config: HeroSectionConfig, avatar: HeroAvatarConfig): void {
-    this.section.set(ensureHeroTypeSection(config));
-    this.avatar.set(ensureHeroTypeAvatar(avatar));
-    this.persist();
-  }
-
-  saveButtons(config: HeroButtonsConfig): void {
-    this.buttons.set(ensureHeroTypeButtons(config));
-    this.persist();
-  }
-
-  addTypingLine(data: HeroTypingFormData): void {
-    const items = this.typingLines();
-    const item: HeroTypingLine = ensureHeroTypeTypingLine({
-      id: generateId(),
-      ...data,
-      type: HERO_SECTION_TYPE_CODE,
-      sortOrder: data.sortOrder > 0 ? data.sortOrder : nextSortOrder(items),
-      isActive: true,
-    });
-    this.typingLines.set([...items, item]);
-    this.persist();
-  }
-
-  updateTypingLine(id: string, data: HeroTypingFormData): void {
-    this.typingLines.update(items =>
-      items.map(t => (t.id === id ? ensureHeroTypeTypingLine({ ...t, ...data, type: HERO_SECTION_TYPE_CODE }) : t)),
-    );
-    this.persist();
-  }
-
-  deleteTypingLine(id: string): void {
-    this.typingLines.update(items => items.filter(t => t.id !== id));
-    this.persist();
-  }
-
-  setTypingLineStatus(id: string, isActive: boolean): void {
-    this.typingLines.update(items => items.map(t => (t.id === id ? { ...t, isActive } : t)));
-    this.persist();
-  }
-
-  addSocialLink(data: HeroSocialFormData): void {
-    const items = this.socialLinks();
-    const item: HeroSocialLink = ensureHeroTypeSocialLink({
-      id: generateId(),
-      ...data,
-      type: HERO_SECTION_TYPE_CODE,
-      sortOrder: data.sortOrder > 0 ? data.sortOrder : nextSortOrder(items),
-      isActive: true,
-    });
-    this.socialLinks.set([...items, item]);
-    this.persist();
-  }
-
-  updateSocialLink(id: string, data: HeroSocialFormData): void {
-    this.socialLinks.update(items =>
-      items.map(s => (s.id === id ? ensureHeroTypeSocialLink({ ...s, ...data, type: HERO_SECTION_TYPE_CODE }) : s)),
-    );
-    this.persist();
-  }
-
-  deleteSocialLink(id: string): void {
-    this.socialLinks.update(items => items.filter(s => s.id !== id));
-    this.persist();
-  }
-
-  setSocialLinkStatus(id: string, isActive: boolean): void {
-    this.socialLinks.update(items => items.map(s => (s.id === id ? { ...s, isActive } : s)));
-    this.persist();
   }
 }

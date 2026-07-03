@@ -76,7 +76,7 @@ export class HeroSectionComponent implements OnInit {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
 
   ngOnInit(): void {
-    this.store.load();
+    this.store.loadAdmin();
     this.resetPanelForms();
     setTimeout(() => this.isReady.set(true), 100);
   }
@@ -88,13 +88,17 @@ export class HeroSectionComponent implements OnInit {
   }
 
   saveSection(): void {
-    this.store.saveSection(this.sectionForm, this.avatarForm);
-    this.notify.success('HERO section config saved.');
+    this.store.saveSection(this.sectionForm, this.avatarForm).subscribe({
+      next: () => this.notify.success('HERO section config saved.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to save section config.'),
+    });
   }
 
   saveActions(): void {
-    this.store.saveButtons(this.buttonsForm);
-    this.notify.success('Action buttons config saved.');
+    this.store.saveButtons(this.buttonsForm).subscribe({
+      next: () => this.notify.success('Action buttons config saved.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to save action buttons.'),
+    });
   }
 
   openAdd(entity: EntityType): void {
@@ -131,39 +135,45 @@ export class HeroSectionComponent implements OnInit {
         this.notify.warning('Display order must be >= 1.');
         return;
       }
-      if (mode === 'add') {
-        this.store.addTypingLine(this.typingForm);
-        if (!this.formIsActive) {
-          const added = this.store.typingLines().at(-1);
-          if (added) this.store.setTypingLineStatus(added.id, false);
-        }
-      } else if (id) {
-        this.store.updateTypingLine(id, this.typingForm);
-        this.store.setTypingLineStatus(id, this.formIsActive);
-      }
-    } else {
-      if (!this.socialForm.name.trim() || !this.socialForm.url.trim()) {
-        this.notify.warning('Please enter name and URL.');
-        return;
-      }
-      if (this.socialForm.sortOrder < 1) {
-        this.notify.warning('Display order must be >= 1.');
-        return;
-      }
-      if (mode === 'add') {
-        this.store.addSocialLink(this.socialForm);
-        if (!this.formIsActive) {
-          const added = this.store.socialLinks().at(-1);
-          if (added) this.store.setSocialLinkStatus(added.id, false);
-        }
-      } else if (id) {
-        this.store.updateSocialLink(id, this.socialForm);
-        this.store.setSocialLinkStatus(id, this.formIsActive);
-      }
+      const request$ =
+        mode === 'add'
+          ? this.store.addTypingLine(this.typingForm, this.formIsActive)
+          : id
+            ? this.store.updateTypingLine(id, this.typingForm, this.formIsActive)
+            : null;
+      if (!request$) return;
+      request$.subscribe({
+        next: () => {
+          this.notify.success(mode === 'add' ? 'Added successfully.' : 'Updated successfully.');
+          this.closeDialog();
+        },
+        error: (err: { message?: string }) => this.notify.error(err.message || 'Request failed.'),
+      });
+      return;
     }
 
-    this.notify.success(mode === 'add' ? 'Added successfully.' : 'Updated successfully.');
-    this.closeDialog();
+    if (!this.socialForm.name.trim() || !this.socialForm.url.trim()) {
+      this.notify.warning('Please enter name and URL.');
+      return;
+    }
+    if (this.socialForm.sortOrder < 1) {
+      this.notify.warning('Display order must be >= 1.');
+      return;
+    }
+    const request$ =
+      mode === 'add'
+        ? this.store.addSocialLink(this.socialForm, this.formIsActive)
+        : id
+          ? this.store.updateSocialLink(id, this.socialForm, this.formIsActive)
+          : null;
+    if (!request$) return;
+    request$.subscribe({
+      next: () => {
+        this.notify.success(mode === 'add' ? 'Added successfully.' : 'Updated successfully.');
+        this.closeDialog();
+      },
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Request failed.'),
+    });
   }
 
   deleteItem(entity: EntityType, id: string): void {
@@ -182,10 +192,15 @@ export class HeroSectionComponent implements OnInit {
   onConfirmDelete(): void {
     if (!this.pendingDelete) return;
     const { entity, id } = this.pendingDelete;
-    if (entity === 'typing') this.store.deleteTypingLine(id);
-    else this.store.deleteSocialLink(id);
-    this.notify.success('Deleted successfully.');
-    this.closeConfirm();
+    const request$ =
+      entity === 'typing' ? this.store.deleteTypingLine(id) : this.store.deleteSocialLink(id);
+    request$.subscribe({
+      next: () => {
+        this.notify.success('Deleted successfully.');
+        this.closeConfirm();
+      },
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Delete failed.'),
+    });
   }
 
   closeConfirm(): void {
@@ -195,9 +210,14 @@ export class HeroSectionComponent implements OnInit {
   }
 
   setStatus(entity: EntityType, id: string, isActive: boolean): void {
-    if (entity === 'typing') this.store.setTypingLineStatus(id, isActive);
-    else this.store.setSocialLinkStatus(id, isActive);
-    this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.');
+    const request$ =
+      entity === 'typing'
+        ? this.store.setTypingLineStatus(id, isActive)
+        : this.store.setSocialLinkStatus(id, isActive);
+    request$.subscribe({
+      next: () => this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to update status.'),
+    });
   }
 
   dialogTitle(): string {
