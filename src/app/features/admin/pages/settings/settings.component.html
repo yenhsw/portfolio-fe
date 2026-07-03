@@ -1,0 +1,232 @@
+<app-admin-page
+  [title]="'admin.pages.settings.title' | t"
+  [subtitle]="'admin.pages.settings.subtitle' | t"
+  [icon]="pageIcon"
+>
+  <div class="settings-layout" [class.visible]="isReady()">
+    <!-- Intro -->
+    <div class="info-banner">
+      <strong>{{ 'admin.pages.settings.infoBanner.title' | t }}</strong>
+      {{ 'admin.pages.settings.infoBanner.body' | t }}
+    </div>
+
+    <!-- Tabs -->
+    <div class="settings-tabs">
+      @for (tab of tabList(); track tab.id) {
+        <button
+          class="tab-btn"
+          [class.active]="store.activeTab() === tab.id"
+          (click)="setTab(tab.id)"
+        >
+          <span class="tab-icon" [innerHTML]="tab.icon"></span>
+          <span class="tab-text">
+            <span class="tab-label">{{ tab.label }}</span>
+            <span class="tab-desc">{{ tab.description }}</span>
+          </span>
+        </button>
+      }
+    </div>
+
+    <div class="settings-content">
+      <div class="settings-form">
+        @if (activeTabMeta(); as meta) {
+          <p class="tab-hint">{{ meta.description }}</p>
+        }
+
+        @switch (store.activeTab()) {
+          @case ('general') {
+            <section class="settings-section">
+              <h3 class="section-title">{{ 'admin.pages.settings.generalSection' | t }}</h3>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label class="field-label">{{ 'admin.pages.settings.websiteName' | t }}</label>
+                  <input type="text" class="field-input" [(ngModel)]="formData.name" placeholder="YHS.DEV" />
+                  <span class="field-hint">Shown in footer and branding</span>
+                </div>
+                <div class="form-field">
+                  <label class="field-label">{{ 'admin.pages.settings.titleTag' | t }}</label>
+                  <input type="text" class="field-input" [(ngModel)]="formData.title" placeholder="Hoang Sy Yen - Full Stack Developer" />
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="field-label">{{ 'admin.pages.settings.shortDesc' | t }}</label>
+                <textarea class="field-textarea" [(ngModel)]="formData.description" rows="3"></textarea>
+              </div>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label class="field-label">{{ 'admin.pages.settings.displayName' | t }}</label>
+                  <input type="text" class="field-input" [(ngModel)]="formData.companyName" />
+                </div>
+                <div class="form-field">
+                  <label class="field-label">{{ 'admin.pages.settings.footerCopyright' | t }}</label>
+                  <input type="text" class="field-input" [(ngModel)]="formData.copyright" placeholder="© 2026 Hoang Sy Yen" />
+                </div>
+              </div>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label class="field-label">{{ 'admin.pages.settings.defaultLanguage' | t }}</label>
+                  <select class="field-input" [(ngModel)]="formData.language">
+                    @for (lang of languages; track lang.code) {
+                      <option [value]="lang.code">{{ lang.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label class="field-label">{{ 'admin.pages.settings.timezone' | t }}</label>
+                  <select class="field-input" [(ngModel)]="formData.timezone">
+                    @for (tz of timezones; track tz) {
+                      <option [value]="tz">{{ tz }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="field-label">Favicon URL</label>
+                <input type="url" class="field-input" [(ngModel)]="formData.logo.favicon" placeholder="/favicon.ico" />
+              </div>
+            </section>
+          }
+
+          @case ('seo') {
+            <section class="settings-section">
+              <h3 class="section-title">{{ 'admin.pages.settings.seoSection' | t }}</h3>
+              <div class="form-field">
+                <label class="field-label">{{ 'admin.pages.settings.metaTitle' | t }}</label>
+                <input type="text" class="field-input" [(ngModel)]="formData.metaTitle" />
+              </div>
+              <div class="form-field">
+                <label class="field-label">{{ 'admin.pages.settings.metaDescription' | t }}</label>
+                <textarea class="field-textarea" [(ngModel)]="formData.metaDescription" rows="3"></textarea>
+              </div>
+              <div class="form-field">
+                <label class="field-label">Keywords (comma-separated)</label>
+                <input type="text" class="field-input" [ngModel]="formData.keywords.join(', ')" (ngModelChange)="updateKeywords($event)" />
+              </div>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label class="field-label">Canonical URL</label>
+                  <input type="url" class="field-input" [(ngModel)]="formData.canonicalUrl" placeholder="https://yhs.dev" />
+                </div>
+                <div class="form-field">
+                  <label class="field-label">Robots</label>
+                  <input type="text" class="field-input" [(ngModel)]="formData.robots" placeholder="index, follow" />
+                </div>
+              </div>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label class="field-label">{{ 'admin.pages.settings.ogImage' | t }}</label>
+                  <input type="url" class="field-input" [(ngModel)]="formData.ogImage" />
+                </div>
+                <div class="form-field">
+                  <label class="field-label">Twitter Image URL</label>
+                  <input type="url" class="field-input" [(ngModel)]="formData.twitterImage" />
+                </div>
+              </div>
+            </section>
+          }
+
+          @case ('analytics') {
+            <section class="settings-section">
+              <h3 class="section-title">{{ 'admin.pages.settings.analyticsSection' | t }}</h3>
+              <p class="section-note">IDs will be injected into the page when backend/FE wiring is complete — currently stored in localStorage mock.</p>
+              <div class="form-field">
+                <label class="field-label">{{ 'admin.pages.settings.gaId' | t }}</label>
+                <input type="text" class="field-input" [(ngModel)]="formData.analytics.googleAnalyticsId" placeholder="G-XXXXXXXXXX" />
+              </div>
+              <div class="form-field">
+                <label class="field-label">{{ 'admin.pages.settings.gtmId' | t }}</label>
+                <input type="text" class="field-input" [(ngModel)]="formData.analytics.googleTagManagerId" placeholder="GTM-XXXXXXX" />
+              </div>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label class="field-label">Facebook Pixel ID</label>
+                  <input type="text" class="field-input" [(ngModel)]="formData.analytics.facebookPixelId" />
+                </div>
+                <div class="form-field">
+                  <label class="field-label">{{ 'admin.pages.settings.clarityId' | t }}</label>
+                  <input type="text" class="field-input" [(ngModel)]="formData.analytics.microsoftClarityId" />
+                </div>
+              </div>
+            </section>
+          }
+
+          @case ('system') {
+            <section class="settings-section">
+              <h3 class="section-title">{{ 'admin.pages.settings.systemSection' | t }}</h3>
+              <div class="toggle-group">
+                <label class="toggle-item">
+                  <input type="checkbox" [(ngModel)]="formData.system.maintenanceMode" />
+                  <span class="toggle-copy">
+                    <strong>{{ 'admin.pages.settings.maintenanceMode' | t }}</strong>
+                    <small>Show maintenance page instead of portfolio (when API is wired)</small>
+                  </span>
+                </label>
+                <label class="toggle-item">
+                  <input type="checkbox" [(ngModel)]="formData.system.comingSoon" />
+                  <span class="toggle-copy">
+                    <strong>Coming Soon</strong>
+                    <small>Temporary landing page before official launch</small>
+                  </span>
+                </label>
+                <label class="toggle-item">
+                  <input type="checkbox" [(ngModel)]="formData.system.enableContactForm" />
+                  <span class="toggle-copy">
+                    <strong>{{ 'admin.pages.settings.enableContactForm' | t }}</strong>
+                    <small>Disable to hide form on Home — contact info still visible</small>
+                  </span>
+                </label>
+                <label class="toggle-item">
+                  <input type="checkbox" [(ngModel)]="formData.system.enableDownloadCV" />
+                  <span class="toggle-copy">
+                    <strong>{{ 'admin.pages.settings.enableCvDownload' | t }}</strong>
+                    <small>CV file URL configured in Hero Section</small>
+                  </span>
+                </label>
+                <label class="toggle-item">
+                  <input type="checkbox" [(ngModel)]="formData.system.enableBlog" />
+                  <span class="toggle-copy">
+                    <strong>Enable Blog (future)</strong>
+                    <small>Blog section not on Home yet — reserved for later phase</small>
+                  </span>
+                </label>
+              </div>
+            </section>
+
+            <section class="settings-section redirect-note">
+              <h3 class="section-title">Where to manage content?</h3>
+              <ul class="redirect-list">
+                <li><strong>Hero, avatar, CV, hero social</strong> → Admin → Hero</li>
+                <li><strong>Email, phone, Contact form UI</strong> → Admin → Contact</li>
+                <li><strong>Projects on Home</strong> → Admin → Featured Projects</li>
+                <li><strong>Visitor messages</strong> → Admin → Messages</li>
+              </ul>
+            </section>
+          }
+        }
+
+        <div class="settings-actions">
+          <app-admin-button variant="secondary" (click)="resetSettings()">{{ 'admin.common.resetSettings' | t }}</app-admin-button>
+          <app-admin-button variant="secondary" (click)="exportSettings()">{{ 'admin.common.exportSettings' | t }}</app-admin-button>
+          <app-admin-button variant="primary" (click)="saveSettings()" [loading]="store.saving()">
+            {{ store.isDirty() ? ('admin.common.saveSettings' | t) : ('admin.common.saved' | t) }}
+          </app-admin-button>
+        </div>
+      </div>
+
+      <!-- Scope panel -->
+      <aside class="scope-panel">
+        <h3>{{ 'admin.pages.settings.scopeTitle' | t }}</h3>
+        <p class="scope-intro">Items that will apply when Settings are wired to the public layout:</p>
+        <ul>
+          @for (item of scopeByTab[store.activeTab()]; track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+        <div class="scope-divider"></div>
+        <p class="scope-footer">
+          Mock data stored in <code>portfolio_settings_data</code> in localStorage.
+        </p>
+      </aside>
+    </div>
+  </div>
+</app-admin-page>

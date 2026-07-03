@@ -1,0 +1,183 @@
+<section id="blog" class="blog-section">
+  <!-- Background Effects -->
+  <div class="blog-bg">
+    <div class="bg-grid"></div>
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+    <div class="circuit-lines"></div>
+  </div>
+
+  <div class="container">
+    <!-- Section Title -->
+    <div class="section-header" [class.visible]="isVisible()">
+      <span class="section-tag">Knowledge Hub</span>
+      <h2 class="section-title">
+        <span class="title-accent">TECH</span>
+        <span class="title-text">JOURNAL</span>
+      </h2>
+      <p class="section-subtitle">
+        Sharing Knowledge & Experience - Articles about software development, architecture, and best practices.
+      </p>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-wrapper" [class.visible]="isVisible()">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search articles..."
+          (input)="onSearch($event)"
+        />
+        @if (searchQuery()) {
+          <button class="search-clear" (click)="clearSearch()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar" [class.visible]="isVisible()">
+      @for (filter of filters; track filter.key) {
+        <button
+          class="filter-btn"
+          [class.active]="activeFilter() === filter.key"
+          (click)="setFilter(filter.key)"
+        >
+          {{ filter.label }}
+        </button>
+      }
+    </div>
+
+    <!-- Featured Article -->
+    @if (featuredArticle(); as featured) {
+      <div
+        class="featured-article"
+        [class.visible]="isVisible()"
+        (mouseenter)="onFeaturedHover(true)"
+        (mouseleave)="onFeaturedHover(false)"
+      >
+        <div class="featured-border-beam"></div>
+        <div class="featured-glow" [class.active]="isFeaturedHovered()"></div>
+
+        <div class="featured-image">
+          <div class="image-placeholder">
+            <span class="placeholder-icon">📝</span>
+            <span class="placeholder-text">Featured Article</span>
+          </div>
+          <div class="image-overlay">
+            <span class="featured-badge">Featured</span>
+          </div>
+        </div>
+
+        <div class="featured-content">
+          <div class="featured-meta">
+            <span class="featured-date">{{ featured.publishDate }}</span>
+            <span class="featured-dot">•</span>
+            <span class="featured-readtime">{{ featured.readTime }} min read</span>
+          </div>
+
+          <h3 class="featured-title">{{ featured.title }}</h3>
+          <p class="featured-summary">{{ featured.summary }}</p>
+
+          <div class="featured-tags">
+            @for (tag of featured.tags; track tag) {
+              <span class="tag-badge">{{ tag }}</span>
+            }
+          </div>
+
+          <a href="#" class="read-more-btn">
+            <span>Read Article</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    }
+
+    <!-- Articles Grid -->
+    <div class="articles-grid">
+      @for (article of filteredArticles(); track article.id; let i = $index) {
+        <div
+          class="article-card"
+          [class.visible]="isVisible()"
+          [style.animation-delay]="(i * 0.1) + 's'"
+          (mouseenter)="onCardHover(article.id)"
+          (mouseleave)="onCardLeave()"
+        >
+          <div class="card-border-beam"></div>
+          <div class="card-glow"></div>
+
+          <div class="card-image">
+            <div class="image-placeholder">
+              <span class="placeholder-icon">📄</span>
+              <span class="placeholder-text">{{ article.title }}</span>
+            </div>
+          </div>
+
+          <div class="card-content">
+            <div class="card-meta">
+              <span class="card-date">{{ article.publishDate }}</span>
+              <span class="card-dot">•</span>
+              <span class="card-readtime">{{ article.readTime }} min</span>
+            </div>
+
+            <h4 class="card-title">{{ article.title }}</h4>
+            <p class="card-summary">{{ article.summary }}</p>
+
+            <div class="card-tags">
+              @for (tag of article.tags.slice(0, 2); track tag) {
+                <span class="tag-badge">{{ tag }}</span>
+              }
+            </div>
+
+            <a href="#" class="read-link">
+              <span>Read More</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Empty State -->
+    @if (filteredArticles().length === 0 && !searchQuery()) {
+      <div class="empty-state">
+        <span class="empty-icon">📭</span>
+        <p>No articles found for this category.</p>
+      </div>
+    }
+
+    @if (searchQuery() && filteredArticles().length === 0) {
+      <div class="empty-state">
+        <span class="empty-icon">🔍</span>
+        <p>No articles match "{{ searchQuery() }}"</p>
+        <button class="clear-search-btn" (click)="clearSearch()">Clear Search</button>
+      </div>
+    }
+
+    <!-- View All Button -->
+    <div class="view-all-wrapper" [class.visible]="isVisible()">
+      <a href="#" class="view-all-btn">
+        <span>View All Articles</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14"/>
+          <path d="m12 5 7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,74 @@
+@if (hasAnyContent()) {
+  <section id="skills" class="skills-section">
+    <div class="skills-bg">
+      <div class="bg-grid"></div>
+      <div class="bg-glow glow-1"></div>
+      <div class="bg-glow glow-2"></div>
+    </div>
+
+    <div class="container">
+      <div class="section-header" [class.visible]="isVisible()">
+        <span class="section-tag">{{ section().sectionTag }}</span>
+        <h2 class="section-title">
+          <span class="title-accent">{{ section().titleAccent }}</span>
+          <span class="title-text">{{ section().titleText }}</span>
+        </h2>
+        <p class="section-subtitle">{{ section().subtitle }}</p>
+      </div>
+
+      @if (statistics().length > 0) {
+        <div class="stats-section" [class.visible]="isVisible()">
+          @for (stat of statistics(); track stat.id; let i = $index) {
+            <div class="stat-item" [style.animation-delay]="(i * 0.1) + 's'">
+              <div class="stat-value">
+                <span class="stat-number">{{ displayValues()[i] }}</span>
+                <span class="stat-suffix">{{ stat.valueSuffix }}</span>
+              </div>
+              <div class="stat-label">{{ stat.label }}</div>
+            </div>
+          }
+        </div>
+      }
+
+      @if (skillCategories().length > 0) {
+        <div class="skills-main" [class.visible]="isVisible()">
+          <div class="categories-grid">
+            @for (category of skillCategories(); track category.name; let catIndex = $index) {
+              <div class="category-card" [style.--category-color]="category.color" [style.animation-delay]="(catIndex * 0.15) + 's'">
+                <div class="category-header">
+                  <div class="category-icon">{{ category.icon }}</div>
+                  <h3 class="category-title">{{ category.name }}</h3>
+                </div>
+                <div class="skills-list">
+                  @for (skill of category.skills; track skill.name; let i = $index) {
+                    <div
+                      class="skill-card"
+                      [class.revealed]="isVisible()"
+                      [style.animation-delay]="(catIndex * 0.15 + i * 0.05) + 's'"
+                      (mouseenter)="onSkillHover(skill.name)"
+                      (mouseleave)="onSkillLeave()"
+                    >
+                      <div class="skill-icon-wrapper">
+                        @if (skill.logo) {
+                          <img
+                            class="skill-logo"
+                            [src]="skill.logo"
+                            [alt]="skill.name"
+                            loading="lazy"
+                          />
+                        }
+                      </div>
+                      <div class="skill-info">
+                        <span class="skill-name">{{ skill.name }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+}

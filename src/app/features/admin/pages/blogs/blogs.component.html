@@ -1,0 +1,407 @@
+<app-admin-page
+  title="Blog Management"
+  subtitle="Manage your blog posts and articles"
+  [icon]="pageIcon"
+>
+  <!-- Toolbar -->
+  <div class="toolbar" [class.visible]="isReady()">
+    <div class="toolbar-left">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" class="search-input" placeholder="Search posts..."
+          [value]="store.searchQuery()" (input)="onSearch($event)" />
+      </div>
+      <select class="filter-select" [value]="store.filterCategory()" (change)="onCategoryFilter($event)">
+        <option value="">All Categories</option>
+        @for (cat of categories; track cat.id) {
+          <option [value]="cat.id">{{ cat.name }}</option>
+        }
+      </select>
+      <select class="filter-select" [value]="store.filterStatus()" (change)="onStatusFilter($event)">
+        <option value="">All Status</option>
+        @for (s of statuses; track s.value) {
+          <option [value]="s.value">{{ s.label }}</option>
+        }
+      </select>
+    </div>
+    <div class="toolbar-right">
+      @if (store.hasSelectedItems()) {
+        <div class="bulk-actions">
+          <span class="selected-count">{{ store.selectedCount() }} selected</span>
+          <button class="bulk-btn" (click)="bulkPublish()">Publish</button>
+          <button class="bulk-btn" (click)="bulkUnpublish()">Unpublish</button>
+          <button class="bulk-btn danger" (click)="bulkDelete()">Delete</button>
+        </div>
+      }
+      <div class="view-toggle">
+        <button class="toggle-btn" [class.active]="viewMode() === 'featured'" (click)="viewMode.set('featured')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </button>
+        <button class="toggle-btn" [class.active]="viewMode() === 'all'" (click)="viewMode.set('all')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+            <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <app-admin-button variant="secondary" (click)="exportBlogs()">Export</app-admin-button>
+      <app-admin-button variant="secondary" (click)="importBlogs()">Import</app-admin-button>
+      <app-admin-button variant="primary" (click)="openAddDialog()">New Post</app-admin-button>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="blogs-layout" [class.visible]="isReady()">
+    <div class="blogs-main-section">
+      @if (viewMode() === 'featured') {
+        <div class="featured-section">
+          <div class="section-header">
+            <h3 class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              Featured Posts
+            </h3>
+            <span class="section-count">{{ store.featuredBlogs().length }} posts</span>
+          </div>
+          <div class="featured-grid">
+            @for (blog of store.featuredBlogs(); track blog.id) {
+              <div class="blog-card" [class.selected]="selectedBlog()?.id === blog.id" (click)="openViewDialog(blog)">
+                <div class="card-image">
+                  <img [src]="blog.thumbnail" [alt]="blog.title" />
+                  @if (blog.isFeatured) {
+                    <span class="featured-badge">
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                      </svg>
+                    </span>
+                  }
+                  <div class="card-overlay">
+                    <button class="overlay-btn" (click)="selectAndEdit(blog); $event.stopPropagation()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button class="overlay-btn danger" (click)="deleteBlog(blog.id); $event.stopPropagation()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="card-content">
+                  <div class="card-meta">
+                    <span class="status-badge" [style.--status-color]="getStatusColor(blog.status)">{{ getStatusLabel(blog.status) }}</span>
+                    <span class="category-badge" [style.--cat-color]="getCategoryColor(blog.categoryId)">{{ getCategoryName(blog.categoryId) }}</span>
+                  </div>
+                  <h4 class="card-title">{{ blog.title }}</h4>
+                  <p class="card-summary">{{ blog.summary }}</p>
+                  <div class="card-footer">
+                    <span class="card-author">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                      {{ blog.author }}
+                    </span>
+                    <span class="card-reading">{{ blog.readingTime }} min read</span>
+                  </div>
+                </div>
+              </div>
+            }
+            @if (store.featuredBlogs().length === 0) {
+              <div class="empty-featured">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                <p>No featured posts yet</p>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <app-admin-table [columns]="tableColumns" [data]="blogsForTable()" [loading]="store.loading()"
+          [selectable]="true" [selectedIds]="store.selectedIds()" [showPagination]="true"
+          (rowSelect)="onRowSelect($event)" (actionClick)="onAction($event)" (sortChange)="onSort($event)" />
+      }
+    </div>
+
+    <!-- Preview -->
+    <div class="blogs-preview-section">
+      <div class="preview-header">
+        <h3 class="preview-title">Live Preview</h3>
+        <span class="preview-badge">Real-time</span>
+      </div>
+      @if (selectedBlog()) {
+        <div class="preview-card">
+          <div class="preview-cover">
+            <img [src]="selectedBlog()!.coverImage || selectedBlog()!.thumbnail" [alt]="selectedBlog()!.title" />
+          </div>
+          <div class="preview-content">
+            <div class="preview-meta">
+              <span class="status-badge" [style.--status-color]="getStatusColor(selectedBlog()!.status)">
+                {{ getStatusLabel(selectedBlog()!.status) }}
+              </span>
+              <span class="category-badge" [style.--cat-color]="getCategoryColor(selectedBlog()!.categoryId)">
+                {{ getCategoryName(selectedBlog()!.categoryId) }}
+              </span>
+            </div>
+            <h2 class="preview-title-text">{{ selectedBlog()!.title }}</h2>
+            <div class="preview-info">
+              <span>{{ selectedBlog()!.author }}</span>
+              <span>{{ selectedBlog()!.readingTime }} min read</span>
+              @if (selectedBlog()!.publishDate) {
+                <span>{{ formatDate(selectedBlog()!.publishDate) }}</span>
+              }
+            </div>
+            <p class="preview-summary">{{ selectedBlog()!.summary }}</p>
+            @if (selectedBlog()!.tags.length > 0) {
+              <div class="preview-tags">
+                @for (tag of selectedBlog()!.tags; track tag) {
+                  <span class="tag">{{ tag }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="preview-empty">
+          <p>Select a post to preview</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Dialog -->
+  @if (dialogMode()) {
+    <div class="dialog-overlay" (click)="closeDialog()">
+      <div class="dialog dialog-xl" (click)="$event.stopPropagation()">
+        <div class="dialog-header">
+          <h3 class="dialog-title">{{ getDialogTitle() }}</h3>
+          <div class="dialog-actions">
+            @if (dialogMode() === 'edit') {
+              <span class="auto-save-status" [class.saving]="store.autoSaving()">
+                {{ store.autoSaving() ? 'Saving...' : 'Saved' }}
+              </span>
+            }
+            <button class="dialog-close" (click)="closeDialog()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="dialog-body">
+          @if (dialogMode() === 'view' && selectedBlog()) {
+            <div class="view-mode">
+              <div class="view-hero">
+                <img [src]="selectedBlog()!.coverImage || selectedBlog()!.thumbnail" [alt]="selectedBlog()!.title" class="view-cover" />
+                <div class="view-hero-content">
+                  <div class="view-meta">
+                    <span class="status-badge" [style.--status-color]="getStatusColor(selectedBlog()!.status)">
+                      {{ getStatusLabel(selectedBlog()!.status) }}
+                    </span>
+                  </div>
+                  <h1 class="view-title">{{ selectedBlog()!.title }}</h1>
+                  <div class="view-info">
+                    <span>{{ selectedBlog()!.author }}</span>
+                    <span>{{ selectedBlog()!.readingTime }} min read</span>
+                    @if (selectedBlog()!.publishDate) {
+                      <span>{{ formatDate(selectedBlog()!.publishDate) }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+              <div class="view-content">
+                <p class="view-summary">{{ selectedBlog()!.summary }}</p>
+                @if (selectedBlog()!.tags.length > 0) {
+                  <div class="view-tags">
+                    @for (tag of selectedBlog()!.tags; track tag) {
+                      <span class="tag">{{ tag }}</span>
+                    }
+                  </div>
+                }
+                <div class="view-body" [innerHTML]="selectedBlog()!.content"></div>
+              </div>
+            </div>
+          } @else {
+            <div class="form-tabs">
+              <button class="tab-btn" [class.active]="activeTab() === 'basic'" (click)="activeTab.set('basic')">Basic</button>
+              <button class="tab-btn" [class.active]="activeTab() === 'content'" (click)="activeTab.set('content')">Content</button>
+              <button class="tab-btn" [class.active]="activeTab() === 'seo'" (click)="activeTab.set('seo')">SEO</button>
+            </div>
+            <div class="form-content">
+              @if (activeTab() === 'basic') {
+                <section class="form-section">
+                  <h4 class="section-title">Basic Information</h4>
+                  <div class="form-field">
+                    <label class="field-label">Title <span class="required">*</span></label>
+                    <input type="text" class="field-input" [(ngModel)]="formData.title"
+                      placeholder="Post title..." (input)="onTitleChange()" />
+                  </div>
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label class="field-label">Slug</label>
+                      <input type="text" class="field-input" [(ngModel)]="formData.slug" placeholder="post-slug" />
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">Author</label>
+                      <input type="text" class="field-input" [(ngModel)]="formData.author" placeholder="Author name" />
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">Category</label>
+                      <select class="field-input" [(ngModel)]="formData.categoryId">
+                        @for (cat of categories; track cat.id) {
+                          <option [value]="cat.id">{{ cat.name }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">Status</label>
+                      <select class="field-input" [(ngModel)]="formData.status">
+                        @for (s of statuses; track s.value) {
+                          <option [value]="s.value">{{ s.label }}</option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-field">
+                    <label class="field-label">
+                      <input type="checkbox" [(ngModel)]="formData.isFeatured" /> Featured Post
+                    </label>
+                  </div>
+                  <div class="form-field">
+                    <label class="field-label">Summary <span class="required">*</span></label>
+                    <textarea class="field-textarea" [(ngModel)]="formData.summary" rows="3" placeholder="Brief summary..."></textarea>
+                  </div>
+                  <div class="form-field">
+                    <label class="field-label">Tags</label>
+                    <div class="tags-input">
+                      @for (tag of formData.tags; track tag; let i = $index) {
+                        <span class="tag-item">
+                          {{ tag }}
+                          <button (click)="removeTag(i)">×</button>
+                        </span>
+                      }
+                      <input type="text" class="tag-input" placeholder="Add tag..."
+                        (keydown.enter)="addTag($event)" list="tag-suggestions" />
+                      <datalist id="tag-suggestions">
+                        @for (tag of availableTags; track tag) {
+                          <option [value]="tag">{{ tag }}</option>
+                        }
+                      </datalist>
+                    </div>
+                  </div>
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label class="field-label">Publish Date</label>
+                      <input type="date" class="field-input" [(ngModel)]="formData.publishDate" />
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">Reading Time</label>
+                      <input type="number" class="field-input" [(ngModel)]="formData.readingTime" min="1" max="60" />
+                    </div>
+                  </div>
+                </section>
+              }
+              @if (activeTab() === 'content') {
+                <section class="form-section">
+                  <h4 class="section-title">Content</h4>
+                  <div class="form-field">
+                    <label class="field-label">Thumbnail URL</label>
+                    <input type="url" class="field-input" [(ngModel)]="formData.thumbnail" placeholder="https://..." />
+                    @if (formData.thumbnail) {
+                      <div class="image-preview">
+                        <img [src]="formData.thumbnail" alt="Thumbnail" />
+                      </div>
+                    }
+                  </div>
+                  <div class="form-field">
+                    <label class="field-label">Cover Image URL</label>
+                    <input type="url" class="field-input" [(ngModel)]="formData.coverImage" placeholder="https://..." />
+                    @if (formData.coverImage) {
+                      <div class="image-preview cover">
+                        <img [src]="formData.coverImage" alt="Cover" />
+                      </div>
+                    }
+                  </div>
+                  <div class="form-field">
+                    <label class="field-label">Content (HTML)</label>
+                    <div class="rich-text-placeholder">
+                      <div class="placeholder-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                          <line x1="16" y1="13" x2="8" y2="13"/>
+                          <line x1="16" y1="17" x2="8" y2="17"/>
+                          <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                      </div>
+                      <p>Rich Text Editor Placeholder</p>
+                      <span>Connect to TinyMCE, Quill, or CKEditor later</span>
+                    </div>
+                    <textarea class="field-textarea code" [(ngModel)]="formData.content" rows="12"
+                      placeholder="<h2>Your content...</h2>" (input)="updateReadingTime()"></textarea>
+                  </div>
+                </section>
+              }
+              @if (activeTab() === 'seo') {
+                <section class="form-section">
+                  <h4 class="section-title">SEO</h4>
+                  <div class="form-field">
+                    <label class="field-label">Meta Title</label>
+                    <input type="text" class="field-input" [(ngModel)]="formData.seo.metaTitle"
+                      placeholder="SEO Title" />
+                  </div>
+                  <div class="form-field">
+                    <label class="field-label">Meta Description</label>
+                    <textarea class="field-textarea" [(ngModel)]="formData.seo.metaDescription"
+                      rows="3" placeholder="Meta description..."></textarea>
+                  </div>
+                  <div class="form-field">
+                    <label class="field-label">Keywords (comma separated)</label>
+                    <input type="text" class="field-input"
+                      [ngModel]="formData.seo.keywords.join(', ')" (ngModelChange)="updateKeywords($event)"
+                      placeholder="keyword1, keyword2" />
+                  </div>
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label class="field-label">OG Image URL</label>
+                      <input type="url" class="field-input" [(ngModel)]="formData.seo.ogImage" placeholder="https://..." />
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">Canonical URL</label>
+                      <input type="url" class="field-input" [(ngModel)]="formData.seo.canonicalUrl" placeholder="https://..." />
+                    </div>
+                  </div>
+                </section>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="dialog-footer">
+          @if (dialogMode() === 'view') {
+            <app-admin-button variant="secondary" (click)="closeDialog()">Close</app-admin-button>
+            <app-admin-button variant="primary" (click)="openEditFromView()">Edit</app-admin-button>
+          } @else {
+            <app-admin-button variant="secondary" (click)="closeDialog()">Cancel</app-admin-button>
+            @if (dialogMode() === 'edit') {
+              <app-admin-button variant="danger" (click)="deleteCurrentBlog()">Delete</app-admin-button>
+            }
+            <app-admin-button variant="primary" (click)="saveBlog()" [loading]="store.saving()">
+              {{ dialogMode() === 'add' ? 'Create' : 'Save' }}
+            </app-admin-button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</app-admin-page>

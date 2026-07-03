@@ -1,0 +1,182 @@
+<app-admin-page
+  [title]="'admin.pages.messages.title' | t"
+  [subtitle]="'admin.pages.messages.subtitle' | t"
+  [icon]="pageIcon"
+>
+  <div class="msg-page" [class.visible]="isReady()">
+    <!-- Stats -->
+    <div class="msg-stats">
+      @for (stat of statList(); track stat.label) {
+        <div class="stat-card">
+          <span class="stat-value" [style.color]="stat.accent">{{ stat.value }}</span>
+          <span class="stat-label">{{ stat.label }}</span>
+        </div>
+      }
+    </div>
+
+    <!-- Folder tabs -->
+    <div class="msg-tabs">
+      @for (folder of folderList(); track folder.value) {
+        <button
+          class="msg-tab"
+          [class.active]="store.activeFolder() === folder.value"
+          (click)="setFolder(folder.value)"
+        >
+          <span class="tab-label">{{ folder.label }}</span>
+          @if (folderCount(folder.value) > 0) {
+            <span class="tab-badge">{{ folderCount(folder.value) }}</span>
+          }
+        </button>
+      }
+    </div>
+
+    @if (activeFolderMeta(); as meta) {
+      <p class="folder-hint">{{ meta.description }}</p>
+    }
+
+    <!-- Master / Detail -->
+    <div class="msg-layout">
+      <!-- List -->
+      <section class="msg-list-panel">
+        <div class="list-toolbar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="{{ 'admin.pages.messages.searchPlaceholder' | t }}"
+              [value]="store.searchQuery()"
+              (input)="onSearch($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="msg-list">
+          @if (store.loading()) {
+            <div class="empty-state">
+              <div class="spinner"></div>
+              <p>{{ 'admin.pages.messages.loading' | t }}</p>
+            </div>
+          } @else if (store.filteredMessages().length === 0) {
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              <p>{{ 'admin.pages.messages.empty' | t }}</p>
+            </div>
+          } @else {
+            @for (msg of store.filteredMessages(); track msg.id) {
+              <button
+                type="button"
+                class="msg-row"
+                [class.active]="store.selectedMessage()?.id === msg.id"
+                [class.unread]="!msg.isRead"
+                (click)="selectMessage(msg)"
+              >
+                <div class="row-avatar">{{ getInitials(msg.fullName) }}</div>
+                <div class="row-body">
+                  <div class="row-top">
+                    <span class="row-name">{{ msg.fullName }}</span>
+                    <span class="row-time">{{ formatDate(msg.createdAt) }}</span>
+                  </div>
+                  <div class="row-subject">{{ msg.subject }}</div>
+                  <div class="row-preview">{{ getPreview(msg.message) }}</div>
+                </div>
+                <button
+                  type="button"
+                  class="row-star"
+                  [class.starred]="msg.isStarred"
+                  (click)="toggleStar(msg.id, $event)"
+                  title="Star message"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                </button>
+              </button>
+            }
+          }
+        </div>
+      </section>
+
+      <!-- Detail -->
+      <section class="msg-detail-panel">
+        @if (store.selectedMessage(); as msg) {
+          <div class="detail-header">
+            <div>
+              <h3>{{ msg.subject }}</h3>
+              <p class="detail-meta">
+                {{ formatFullDate(msg.createdAt) }}
+                ·
+                <span class="priority-pill" [style.--c]="getPriorityColor(msg.priority)">
+                  {{ getPriorityLabel(msg.priority) }}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div class="sender-card">
+            <div class="sender-avatar">{{ getInitials(msg.fullName) }}</div>
+            <div class="sender-info">
+              <strong>{{ msg.fullName }}</strong>
+              <button type="button" class="link-btn" (click)="copyEmail(msg.email)">{{ msg.email }}</button>
+              @if (msg.phone) {
+                <span class="sender-phone">{{ msg.phone }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="detail-message">
+            <pre>{{ msg.message }}</pre>
+          </div>
+
+          @if (msg.replies.length > 0) {
+            <div class="detail-replies">
+              <h4>Reply notes</h4>
+              @for (reply of msg.replies; track reply.id) {
+                <div class="reply-item">
+                  <span class="reply-meta">{{ formatFullDate(reply.sentAt) }}</span>
+                  <pre>{{ reply.content }}</pre>
+                </div>
+              }
+            </div>
+          }
+
+          <div class="detail-actions">
+            <app-admin-button variant="primary" (click)="replyByEmail(msg)">
+              {{ 'admin.pages.messages.replyViaEmail' | t }}
+            </app-admin-button>
+            @if (msg.isRead) {
+              <app-admin-button variant="secondary" (click)="markUnread(msg.id)">{{ 'admin.common.markUnread' | t }}</app-admin-button>
+            }
+            @if (msg.folder === 'archived' || msg.folder === 'trash') {
+              <app-admin-button variant="secondary" (click)="restoreMessage(msg.id)">{{ 'admin.common.restore' | t }}</app-admin-button>
+            } @else {
+              <app-admin-button variant="secondary" (click)="archiveMessage(msg.id)">{{ 'admin.pages.messages.archiveBtn' | t }}</app-admin-button>
+            }
+            <app-admin-button variant="danger" (click)="confirmDelete(msg.id)">{{ 'admin.pages.messages.deleteBtn' | t }}</app-admin-button>
+          </div>
+        } @else {
+          <div class="detail-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <h3>Select a message</h3>
+            <p>The list on the left shows messages from the Contact form. Select one to view details and reply.</p>
+          </div>
+        }
+      </section>
+    </div>
+  </div>
+</app-admin-page>
+
+<app-admin-confirm-dialog
+  [isOpen]="confirmOpen()"
+  [config]="confirmConfig()"
+  (confirmed)="onConfirmDelete()"
+  (cancelled)="closeConfirm()"
+/>

@@ -1,0 +1,57 @@
+// ============================================================
+// TECH CHIP STYLES
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+.tech-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 28px;
+  padding-inline: var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    background: var(--surface-soft);
+    border-color: var(--border-accent);
+    color: var(--primary);
+  }
+
+  &--removable {
+    padding-right: var(--space-2);
+  }
+}
+
+.chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  &:hover {
+    color: var(--danger);
+    background: var(--danger-muted);
+  }
+}

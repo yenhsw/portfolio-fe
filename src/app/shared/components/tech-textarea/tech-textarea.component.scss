@@ -1,0 +1,109 @@
+// ============================================================
+// TECH TEXTAREA STYLES
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+.textarea-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.textarea-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+
+  .required {
+    color: var(--danger);
+    margin-left: 2px;
+  }
+}
+
+.textarea-container {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-base);
+
+  .textarea-wrapper.focused & {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-muted), 0 0 15px var(--glow-primary-sm);
+  }
+
+  .textarea-wrapper.error & {
+    border-color: var(--danger);
+  }
+
+  .textarea-wrapper.disabled & {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.textarea-field {
+  width: 100%;
+  min-height: 120px;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  border-radius: inherit;
+  outline: none;
+  resize: vertical;
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    resize: none;
+  }
+}
+
+.glow-effect {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  background: radial-gradient(circle at 50% 0%, var(--primary-muted), transparent 50%);
+  transition: opacity var(--transition-base);
+
+  .textarea-wrapper.focused & {
+    opacity: 1;
+  }
+}
+
+.textarea-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.textarea-error {
+  font-size: var(--text-xs);
+  color: var(--danger);
+}
+
+.textarea-hint {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.char-count {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+
+  &.exceeded {
+    color: var(--danger);
+  }
+}

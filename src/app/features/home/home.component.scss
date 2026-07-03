@@ -1,0 +1,78 @@
+// ============================================================
+// HOME STYLES
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+.home {
+  position: relative;
+  min-height: 100vh;
+}
+
+.home-content {
+  position: relative;
+}
+
+// ============================================================
+// SECTION PLACEHOLDER
+// ============================================================
+
+.section-placeholder {
+  min-height: 50vh;
+  display: flex;
+  align-items: center;
+  padding: 80px 0;
+  background: var(--surface);
+
+  &.alt {
+    background: var(--background);
+  }
+
+  h2 {
+    font-size: var(--text-4xl);
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-4);
+  }
+
+  p {
+    font-size: var(--text-lg);
+    color: var(--text-secondary);
+  }
+}
+
+// ============================================================
+// FOOTER
+// ============================================================
+
+.footer {
+  padding: var(--space-8) 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  text-align: center;
+
+  p {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    margin: 0;
+  }
+}
+
+// ============================================================
+// CONTAINER
+// ============================================================
+
+.container {
+  width: 100%;
+  max-width: var(--container-xl);
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+
+  @media (min-width: 768px) {
+    padding: 0 var(--space-6);
+  }
+
+  @media (min-width: 1024px) {
+    padding: 0 var(--space-8);
+  }
+}

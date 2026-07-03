@@ -1,0 +1,211 @@
+// ============================================================
+// THEME VARIABLES - SCSS Bridge
+// Maps CSS variables to SCSS variables for mixin usage
+// ============================================================
+
+// ============================================================
+// COLOR SYSTEM
+// ============================================================
+
+// Background
+$color-background: var(--background);
+$color-background-soft: var(--background-soft);
+$color-surface: var(--surface);
+$color-surface-soft: var(--surface-soft);
+$color-surface-elevated: var(--surface-elevated);
+$color-surface-hover: var(--surface-hover);
+
+// Primary
+$color-primary: var(--primary);
+$color-primary-dark: var(--primary-dark);
+$color-primary-light: var(--primary-light);
+$color-primary-muted: var(--primary-muted);
+
+// Secondary
+$color-secondary: var(--secondary);
+$color-secondary-dark: var(--secondary-dark);
+$color-secondary-light: var(--secondary-light);
+
+// Accent
+$color-accent: var(--accent);
+$color-accent-dark: var(--accent-dark);
+$color-accent-light: var(--accent-light);
+
+// Status
+$color-success: var(--success);
+$color-success-dark: var(--success-dark);
+$color-success-light: var(--success-light);
+
+$color-warning: var(--warning);
+$color-warning-dark: var(--warning-dark);
+$color-warning-light: var(--warning-light);
+
+$color-danger: var(--danger);
+$color-danger-dark: var(--danger-dark);
+$color-danger-light: var(--danger-light);
+
+$color-info: var(--info);
+$color-info-dark: var(--info-dark);
+$color-info-light: var(--info-light);
+
+// Text
+$color-text-primary: var(--text-primary);
+$color-text-secondary: var(--text-secondary);
+$color-text-tertiary: var(--text-tertiary);
+$color-text-muted: var(--text-muted);
+$color-text-disabled: var(--text-disabled);
+$color-text-inverse: var(--text-inverse);
+
+// Border
+$color-border: var(--border);
+$color-border-soft: var(--border-soft);
+$color-border-light: var(--border-light);
+$color-border-medium: var(--border-medium);
+$color-border-accent: var(--border-accent);
+$color-border-glow: var(--border-glow);
+
+// Glow
+$color-glow-primary: var(--glow-primary);
+$color-glow-primary-sm: var(--glow-primary-sm);
+$color-glow-primary-md: var(--glow-primary-md);
+$color-glow-primary-lg: var(--glow-primary-lg);
+
+$color-glow-secondary: var(--glow-secondary);
+$color-glow-success: var(--glow-success);
+$color-glow-warning: var(--glow-warning);
+$color-glow-danger: var(--glow-danger);
+
+// ============================================================
+// TYPOGRAPHY
+// ============================================================
+
+$font-family-primary: var(--font-sans);
+$font-family-secondary: var(--font-display);
+$font-family-mono: var(--font-mono);
+
+$font-size-xs: var(--text-xs);
+$font-size-sm: var(--text-sm);
+$font-size-base: var(--text-base);
+$font-size-lg: var(--text-lg);
+$font-size-xl: var(--text-xl);
+$font-size-2xl: var(--text-2xl);
+$font-size-3xl: var(--text-3xl);
+$font-size-4xl: var(--text-4xl);
+$font-size-5xl: var(--text-5xl);
+$font-size-6xl: var(--text-6xl);
+$font-size-7xl: var(--text-7xl);
+$font-size-8xl: var(--text-8xl);
+
+$font-weight-thin: var(--font-thin);
+$font-weight-light: var(--font-light);
+$font-weight-normal: var(--font-normal);
+$font-weight-medium: var(--font-medium);
+$font-weight-semibold: var(--font-semibold);
+$font-weight-bold: var(--font-bold);
+$font-weight-extrabold: var(--font-extrabold);
+
+$line-height-none: var(--leading-none);
+$line-height-tight: var(--leading-tight);
+$line-height-snug: var(--leading-snug);
+$line-height-normal: var(--leading-normal);
+$line-height-relaxed: var(--leading-relaxed);
+
+$letter-spacing-tight: var(--tracking-tight);
+$letter-spacing-normal: var(--tracking-normal);
+$letter-spacing-wide: var(--tracking-wide);
+$letter-spacing-wider: var(--tracking-wider);
+
+// ============================================================
+// SPACING
+// ============================================================
+
+$spacing-0: var(--space-0);
+$spacing-px: var(--space-px);
+$spacing-1: var(--space-1);
+$spacing-2: var(--space-2);
+$spacing-3: var(--space-3);
+$spacing-4: var(--space-4);
+$spacing-5: var(--space-5);
+$spacing-6: var(--space-6);
+$spacing-7: var(--space-7);
+$spacing-8: var(--space-8);
+$spacing-9: var(--space-9);
+$spacing-10: var(--space-10);
+$spacing-12: var(--space-12);
+$spacing-14: var(--space-14);
+$spacing-16: var(--space-16);
+$spacing-20: var(--space-20);
+$spacing-24: var(--space-24);
+$spacing-32: var(--space-32);
+
+// ============================================================
+// BORDER RADIUS
+// ============================================================
+
+$radius-none: var(--radius-none);
+$radius-sm: var(--radius-sm);
+$radius-xs: var(--radius-xs);
+$radius-md: var(--radius-md);
+$radius-lg: var(--radius-lg);
+$radius-xl: var(--radius-xl);
+$radius-2xl: var(--radius-2xl);
+$radius-3xl: var(--radius-3xl);
+$radius-full: var(--radius-full);
+
+// ============================================================
+// SHADOWS
+// ============================================================
+
+$shadow-sm: var(--shadow-sm);
+$shadow-md: var(--shadow-md);
+$shadow-lg: var(--shadow-lg);
+$shadow-xl: var(--shadow-xl);
+$shadow-2xl: var(--shadow-2xl);
+$shadow-card: var(--shadow-card);
+$shadow-card-hover: var(--shadow-card-hover);
+$shadow-card-glow: var(--shadow-card-glow);
+
+// ============================================================
+// TRANSITIONS
+// ============================================================
+
+$transition-fast: var(--transition-fast);
+$transition-base: var(--transition-base);
+$transition-slow: var(--transition-slow);
+$transition-slower: var(--transition-slower);
+$transition-spring: var(--transition-spring);
+
+// ============================================================
+// Z-INDEX
+// ============================================================
+
+$z-dropdown: var(--z-dropdown);
+$z-sticky: var(--z-sticky);
+$z-fixed: var(--z-fixed);
+$z-modal-backdrop: var(--z-modal-backdrop);
+$z-modal: var(--z-modal);
+$z-popover: var(--z-popover);
+$z-tooltip: var(--z-tooltip);
+
+// ============================================================
+// BREAKPOINTS
+// ============================================================
+
+$breakpoint-sm: var(--breakpoint-sm);
+$breakpoint-md: var(--breakpoint-md);
+$breakpoint-lg: var(--breakpoint-lg);
+$breakpoint-xl: var(--breakpoint-xl);
+$breakpoint-2xl: var(--breakpoint-2xl);
+
+// Container
+$container-sm: var(--container-sm);
+$container-md: var(--container-md);
+$container-lg: var(--container-lg);
+$container-xl: var(--container-xl);
+$container-2xl: var(--container-2xl);
+
+// Layout
+$navbar-height: var(--navbar-height);
+$navbar-height-mobile: var(--navbar-height-mobile);
+$section-padding-y: var(--section-padding-y);
+$section-padding-y-mobile: var(--section-padding-y-mobile);

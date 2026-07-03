@@ -1,0 +1,184 @@
+// ============================================================
+// ADMIN PAGE STYLES
+// Base Page Layout for Admin CRUD Pages
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+// ============================================================
+// BASE
+// ============================================================
+
+.admin-page {
+  position: relative;
+  min-height: 100%;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ============================================================
+// BACKGROUND
+// ============================================================
+
+.page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(168, 85, 247, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168, 85, 247, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.bg-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.08;
+
+  &.glow-1 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, transparent 70%);
+    top: -150px;
+    right: -150px;
+  }
+
+  &.glow-2 {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.3) 0%, transparent 70%);
+    bottom: -100px;
+    left: -100px;
+  }
+}
+
+// ============================================================
+// PAGE HEADER
+// ============================================================
+
+.page-header {
+  position: relative;
+  margin-bottom: var(--space-6);
+}
+
+.header-content {
+  padding: var(--space-6);
+  background: rgba(10, 15, 26, 0.8);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top left, rgba(168, 85, 247, 0.1) 0%, transparent 60%);
+    pointer-events: none;
+  }
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  border-radius: var(--radius-xl);
+  flex-shrink: 0;
+
+  svg {
+    width: 28px;
+    height: 28px;
+    color: var(--background);
+  }
+}
+
+.page-title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin: 0;
+
+  @media (min-width: 768px) {
+    font-size: var(--text-3xl);
+  }
+}
+
+.page-subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin: var(--space-1) 0 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+// ============================================================
+// BREADCRUMB
+// ============================================================
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.breadcrumb-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--primary);
+  }
+}
+
+.breadcrumb-separator {
+  color: var(--text-muted);
+}
+
+.breadcrumb-current {
+  color: var(--text-primary);
+  font-weight: var(--font-medium);
+}
+
+// ============================================================
+// PAGE CONTENT
+// ============================================================
+
+.page-content {
+  &.has-header {
+    padding-top: 0;
+  }
+}

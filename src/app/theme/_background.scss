@@ -1,0 +1,363 @@
+// ============================================================
+// BACKGROUND SYSTEM
+// Multi-layer cyber technology background
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+.background-container {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+// ============================================================
+// LAYER 1: Dark Gradient
+// ============================================================
+
+.bg-gradient {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+      ellipse 80% 50% at 50% -20%,
+      rgba(0, 245, 255, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 80% 50%,
+      rgba(139, 92, 246, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 50% 30% at 20% 80%,
+      rgba(6, 182, 212, 0.08) 0%,
+      transparent 50%
+    ),
+    var(--background);
+}
+
+// ============================================================
+// LAYER 2: Technology Grid
+// ============================================================
+
+.bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 70%);
+}
+
+// ============================================================
+// LAYER 3: Moving Grid
+// ============================================================
+
+.bg-moving-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 245, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 255, 0.02) 1px, transparent 1px);
+  background-size: 100px 100px;
+  animation: gridMove 60s linear infinite;
+  mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 10%, transparent 60%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 10%, transparent 60%);
+}
+
+@keyframes gridMove {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(100px);
+  }
+}
+
+// ============================================================
+// LAYER 4: Circuit Lines
+// ============================================================
+
+.bg-circuit {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  background-image:
+    linear-gradient(90deg, transparent 49.5%, rgba(0, 245, 255, 0.1) 49.5%, rgba(0, 245, 255, 0.1) 50.5%, transparent 50.5%),
+    linear-gradient(0deg, transparent 49.5%, rgba(0, 245, 255, 0.1) 49.5%, rgba(0, 245, 255, 0.1) 50.5%, transparent 50.5%);
+  background-size: 80px 80px;
+  
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    background: var(--primary);
+    opacity: 0.3;
+  }
+  
+  &::before {
+    width: 4px;
+    height: 4px;
+    top: 20%;
+    left: 30%;
+    border-radius: 50%;
+    box-shadow:
+      0 0 10px var(--glow-primary),
+      30px 0 0 var(--primary),
+      60px 0 0 var(--primary),
+      0 30px 0 var(--primary),
+      90px 30px 0 var(--primary);
+    animation: circuitPulse 4s ease-in-out infinite;
+  }
+  
+  &::after {
+    width: 4px;
+    height: 4px;
+    bottom: 30%;
+    right: 25%;
+    border-radius: 50%;
+    box-shadow:
+      0 0 10px var(--glow-secondary),
+      -20px 0 0 var(--secondary),
+      -40px 0 0 var(--secondary),
+      0 -20px 0 var(--secondary),
+      -60px -20px 0 var(--secondary);
+    animation: circuitPulse 5s ease-in-out infinite reverse;
+  }
+}
+
+@keyframes circuitPulse {
+  0%, 100% {
+    opacity: 0.3;
+    box-shadow:
+      0 0 10px var(--glow-primary),
+      30px 0 0 var(--primary),
+      60px 0 0 var(--primary);
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow:
+      0 0 20px var(--glow-primary-lg),
+      30px 0 0 var(--primary),
+      60px 0 0 var(--primary);
+  }
+}
+
+// ============================================================
+// LAYER 5: Glow Effects
+// ============================================================
+
+.bg-glow {
+  position: absolute;
+  inset: 0;
+  
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.3;
+    animation: glowFloat 20s ease-in-out infinite;
+  }
+  
+  &::before {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0, 245, 255, 0.3) 0%, transparent 70%);
+    top: -200px;
+    right: -100px;
+    animation-delay: 0s;
+  }
+  
+  &::after {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, transparent 70%);
+    bottom: -100px;
+    left: -100px;
+    animation-delay: -10s;
+  }
+}
+
+@keyframes glowFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translate(30px, -30px) scale(1.05);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.95);
+    opacity: 0.25;
+  }
+  75% {
+    transform: translate(20px, 10px) scale(1.02);
+    opacity: 0.35;
+  }
+}
+
+// ============================================================
+// LAYER 6: Noise Texture
+// ============================================================
+
+.bg-noise {
+  position: absolute;
+  inset: 0;
+  opacity: var(--noise-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+// ============================================================
+// LAYER 7: Scan Line
+// ============================================================
+
+.bg-scan-line {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.03;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--primary),
+      transparent
+    );
+    animation: scan 8s linear infinite;
+  }
+}
+
+@keyframes scan {
+  0% {
+    top: -10%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 110%;
+    opacity: 0;
+  }
+}
+
+// ============================================================
+// LAYER 8: Floating Blur Orbs
+// ============================================================
+
+.bg-floating-orbs {
+  position: absolute;
+  inset: 0;
+  
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    animation: orbFloat 30s ease-in-out infinite;
+    
+    &--1 {
+      width: 300px;
+      height: 300px;
+      background: var(--primary);
+      top: 10%;
+      left: 5%;
+      animation-delay: 0s;
+    }
+    
+    &--2 {
+      width: 200px;
+      height: 200px;
+      background: var(--secondary);
+      top: 60%;
+      right: 10%;
+      animation-delay: -10s;
+    }
+    
+    &--3 {
+      width: 250px;
+      height: 250px;
+      background: var(--accent);
+      bottom: 20%;
+      left: 30%;
+      animation-delay: -20s;
+    }
+  }
+}
+
+@keyframes orbFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.15;
+  }
+  33% {
+    transform: translate(50px, -30px) scale(1.1);
+    opacity: 0.2;
+  }
+  66% {
+    transform: translate(-30px, 50px) scale(0.9);
+    opacity: 0.1;
+  }
+}
+
+// ============================================================
+// COMBINED BACKGROUND COMPONENT
+// ============================================================
+
+.tech-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+
+  .bg-gradient {
+    @extend .bg-gradient;
+  }
+
+  .bg-grid {
+    @extend .bg-grid;
+  }
+
+  .bg-moving-grid {
+    @extend .bg-moving-grid;
+  }
+
+  .bg-circuit {
+    @extend .bg-circuit;
+  }
+
+  .bg-glow {
+    @extend .bg-glow;
+  }
+
+  .bg-noise {
+    @extend .bg-noise;
+  }
+
+  .bg-scan-line {
+    @extend .bg-scan-line;
+  }
+
+  .bg-floating-orbs {
+    @extend .bg-floating-orbs;
+  }
+}

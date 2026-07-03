@@ -1,0 +1,138 @@
+<section id="home" class="hero">
+  <!-- Background Effects -->
+  <div class="hero-bg">
+    <div class="bg-gradient"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-glow-orb orb-1"></div>
+    <div class="bg-glow-orb orb-2"></div>
+    <div class="bg-circuit"></div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="hero-content">
+    <div class="hero-left">
+      <!-- Greeting -->
+      <span class="hero-greeting animate-fade-in-up">{{ section().greeting }}</span>
+
+      <!-- Name -->
+      <h1 class="hero-name animate-fade-in-up stagger-1">
+        <span class="name-text">{{ section().nameText }}</span>
+        <span class="name-highlight">{{ section().nameAccent }}</span>
+      </h1>
+
+      <!-- Typing Effect -->
+      <div class="hero-typing animate-fade-in-up stagger-2">
+        <span class="typing-prefix">{{ section().typingPrefix }}</span>
+        <span class="typing-text">{{ currentText() }}</span>
+        <span class="typing-cursor">|</span>
+      </div>
+
+      <!-- Description -->
+      <p class="hero-description animate-fade-in-up stagger-3">
+        {{ section().description }}
+      </p>
+
+      <!-- Social Links -->
+      <div class="hero-tech animate-fade-in-up stagger-4">
+        @for (tech of socialLinks(); track tech.id; let i = $index) {
+          <a #socialBadge class="social-badge" [href]="tech.url" target="_blank" rel="noopener noreferrer">
+            <svg class="border-svg" viewBox="0 0 52 52" preserveAspectRatio="none">
+              <rect
+                class="base-ring"
+                x="1"
+                y="1"
+                width="50"
+                height="50"
+                rx="15"
+                ry="15"
+                pathLength="174"
+              />
+              <rect
+                #snakePath
+                class="snake-path"
+                x="1"
+                y="1"
+                width="50"
+                height="50"
+                rx="15"
+                ry="15"
+                pathLength="174"
+                stroke-dasharray="0 174"
+                stroke-dashoffset="0"
+              />
+            </svg>
+            <img [src]="tech.icon" [alt]="tech.name" loading="lazy" />
+          </a>
+        }
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="hero-actions animate-fade-in-up stagger-5">
+        @if (buttons().contactEnabled) {
+          <button
+            techButton
+            [variant]="buttons().contactVariant"
+            [size]="'lg'"
+            [borderBeam]="buttons().contactBorderBeam"
+            class="action-btn action-btn--contact"
+            (click)="scrollToContact()"
+          >
+            <span class="btn-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </span>
+            {{ buttons().contactLabel }}
+          </button>
+        }
+        @if (buttons().cvEnabled) {
+          <button
+            techButton
+            [variant]="buttons().cvVariant"
+            [size]="'lg'"
+            [borderBeam]="buttons().cvBorderBeam"
+            class="action-btn action-btn--cv"
+            (click)="downloadCv()"
+          >
+            <span class="btn-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </span>
+            {{ buttons().cvLabel }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="hero-right">
+      @if (avatar().isActive) {
+        <!-- Profile Avatar -->
+        <div class="hero-avatar">
+          <div class="avatar-glow"></div>
+          <div class="avatar-ring"></div>
+          <div class="avatar-image-wrapper">
+            @if (!imageError()) {
+              <img
+                [src]="avatar().imageUrl"
+                [alt]="avatar().alt"
+                class="avatar-image"
+                (error)="onImageError($event)"
+              />
+            } @else {
+              <div class="avatar-fallback">
+                <span>{{ avatar().fallbackInitials }}</span>
+              </div>
+            }
+          </div>
+          <div class="avatar-decoration decoration-1"></div>
+          <div class="avatar-decoration decoration-2"></div>
+          <div class="avatar-decoration decoration-3"></div>
+        </div>
+      }
+    </div>
+  </div>
+
+</section>

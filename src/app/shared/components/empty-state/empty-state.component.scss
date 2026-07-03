@@ -1,0 +1,52 @@
+// ============================================================
+// EMPTY STATE STYLES
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-8);
+}
+
+.empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--space-4);
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+
+  svg {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.empty-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.empty-description {
+  margin: 0 0 var(--space-6);
+  max-width: 300px;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.empty-action {
+  display: flex;
+  gap: var(--space-3);
+}

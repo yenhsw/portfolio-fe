@@ -1,0 +1,173 @@
+@if (hasAnyContent()) {
+  <section id="career" class="career-section">
+    <!-- Background Effects -->
+    <div class="career-bg">
+      <div class="bg-grid"></div>
+      <div class="bg-glow glow-1"></div>
+      <div class="bg-glow glow-2"></div>
+      <div class="circuit-lines"></div>
+    </div>
+
+    <div class="container">
+      <!-- Section Title — chỉ hiện khi section còn nội dung -->  
+      @if (section().sectionTag || section().titleAccent || section().titleText || section().subtitle) {
+        <div class="section-header" [class.visible]="isVisible()">
+          @if (section().sectionTag) {
+            <span class="section-tag">{{ section().sectionTag }}</span>
+          }
+          @if (section().titleAccent || section().titleText) {
+            <h2 class="section-title">
+              @if (section().titleAccent) {
+                <span class="title-accent">{{ section().titleAccent }}</span>
+              }
+              @if (section().titleText) {
+                <span class="title-text">{{ section().titleText }}</span>
+              }
+            </h2>
+          }
+          @if (section().subtitle) {
+            <p class="section-subtitle">{{ section().subtitle }}</p>
+          }
+        </div>
+      }
+
+      <!-- Achievements Stats -->
+      @if (hasHighlights()) {
+        <div class="achievements-section" [class.visible]="isVisible()">
+          @for (achievement of highlights(); track achievement.id; let i = $index) {
+            <div class="achievement-card" [style.animation-delay]="(i * 0.1) + 's'">
+              <div class="achievement-icon">{{ achievement.icon }}</div>
+              <div class="achievement-value">
+                <span class="value-number">{{ displayValues()[i] }}</span>
+                <span class="value-suffix">{{ achievement.valueSuffix }}</span>
+              </div>
+              <div class="achievement-label">{{ achievement.label }}</div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Timeline -->
+      @if (hasTimeline()) {
+        <div class="timeline-wrapper" [class.visible]="isVisible()">
+          <div class="timeline-line">
+            <div class="line-gradient"></div>
+            <div class="line-progress" [style.height.%]="scrollProgress()"></div>
+          </div>
+
+          @for (item of timelineItems(); track item.id; let i = $index) {
+            <div
+              class="timeline-item"
+              [class.left]="i % 2 === 0"
+              [class.right]="i % 2 !== 0"
+              [class.revealed]="revealedItems().has(item.id)"
+              [style.animation-delay]="(i * 0.15) + 's'"
+            >
+              <div class="timeline-node">
+                <div
+                  class="node-dot"
+                  [class.active]="scrollProgress() > ((i + 1) / timelineItems().length) * 100"
+                >
+                  <span class="node-icon">{{ item.icon }}</span>
+                </div>
+              </div>
+
+              <div
+                class="timeline-card type-education"
+                (mouseenter)="onCardHover(item.id)"
+                (mouseleave)="onCardLeave()"
+              >
+                <div class="card-border-beam"></div>
+                <div class="card-glow"></div>
+
+                <div class="year-badge">{{ item.year }}</div>
+
+                <div class="card-header">
+                  <h3 class="card-title">{{ item.institutionName }}</h3>
+                  <span class="card-subtitle">{{ item.courseName }}</span>
+                </div>
+
+                <p class="card-description">{{ item.description }}</p>
+
+                @if (item.technologies.length > 0) {
+                  <div class="tech-stack">
+                    @for (tech of item.technologies; track tech) {
+                      <span class="tech-badge">{{ tech }}</span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Certificates -->
+      @if (hasCertificates()) {
+        <div class="certificates-section" [class.visible]="isVisible()">
+          @if (section().certificatesDividerText) {
+            <div class="section-divider">
+              <span class="divider-line"></span>
+              <span class="divider-text">{{ section().certificatesDividerText }}</span>
+              <span class="divider-line"></span>
+            </div>
+          }
+
+          @if (section().certificatesSubTitle) {
+            <h3 class="subsection-title">{{ section().certificatesSubTitle }}</h3>
+          }
+
+          <div class="certificates-grid">
+            @for (cert of certificates(); track cert.id; let i = $index) {
+              <div
+                class="certificate-card"
+                [style.animation-delay]="(i * 0.1) + 's'"
+                (mouseenter)="onCertHover(cert.id)"
+                (mouseleave)="onCertLeave()"
+              >
+                <div class="cert-border-beam"></div>
+                <div class="cert-glow"></div>
+
+                <div class="cert-icon">{{ cert.icon }}</div>
+                <div class="cert-content">
+                  <h4 class="cert-name">{{ cert.name }}</h4>
+                  <span class="cert-provider">{{ cert.provider }}</span>
+                  <span class="cert-date">{{ cert.year }}</span>
+                </div>
+                <div class="cert-badge">{{ cert.badge }}</div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Future Goals -->
+      @if (hasFutureGoals()) {
+        <div class="future-section" [class.visible]="isVisible()">
+          @if (section().futureGoalsDividerText) {
+            <div class="section-divider">
+              <span class="divider-line"></span>
+              <span class="divider-text">{{ section().futureGoalsDividerText }}</span>
+              <span class="divider-line"></span>
+            </div>
+          }
+          @if (section().futureGoalsSubTitle) {
+            <h3 class="subsection-title">{{ section().futureGoalsSubTitle }}</h3>
+          }
+
+          <div class="future-grid">
+            @for (goal of futureGoals(); track goal.id; let i = $index) {
+              <div class="future-card" [style.animation-delay]="(i * 0.1) + 's'">
+                <div class="future-icon">{{ goal.icon }}</div>
+                <div class="future-content">
+                  <h4 class="future-title">{{ goal.title }}</h4>
+                  <p class="future-description">{{ goal.description }}</p>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+}

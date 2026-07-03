@@ -1,0 +1,54 @@
+// ============================================================
+// BACK TO TOP STYLES
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+.back-to-top {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border-accent);
+  border-radius: 50%;
+  color: var(--primary);
+  cursor: pointer;
+  z-index: var(--z-fixed);
+  transition: all var(--transition-base);
+  box-shadow: 0 0 20px var(--glow-primary-sm);
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  &:hover {
+    background: var(--primary);
+    color: var(--background);
+    transform: translateY(-4px);
+    box-shadow: 0 0 30px var(--glow-primary-md);
+  }
+
+  &:active {
+    transform: translateY(-2px);
+  }
+}
+
+@media (max-width: 768px) {
+  .back-to-top {
+    bottom: var(--space-4);
+    right: var(--space-4);
+    width: 40px;
+    height: 40px;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+}

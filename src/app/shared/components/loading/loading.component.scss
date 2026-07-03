@@ -1,0 +1,122 @@
+// ============================================================
+// LOADING STYLES
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+.loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  color: var(--primary);
+
+  // Sizes
+  &--sm {
+    .spinner svg { width: 16px; height: 16px; }
+    .dots span { width: 4px; height: 4px; }
+    .bars span { width: 3px; height: 12px; }
+    .loading-text { font-size: var(--text-xs); }
+  }
+
+  &--md {
+    .spinner svg { width: 32px; height: 32px; }
+    .dots span { width: 6px; height: 6px; }
+    .bars span { width: 4px; height: 16px; }
+    .loading-text { font-size: var(--text-sm); }
+  }
+
+  &--lg {
+    .spinner svg { width: 48px; height: 48px; }
+    .dots span { width: 8px; height: 8px; }
+    .bars span { width: 5px; height: 24px; }
+    .loading-text { font-size: var(--text-base); }
+  }
+}
+
+// Spinner
+.spinner {
+  svg {
+    animation: spin 1s linear infinite;
+    
+    circle {
+      stroke-dasharray: 80;
+      stroke-dashoffset: 60;
+      animation: dash 1.5s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
+}
+
+// Dots
+.dots {
+  display: flex;
+  gap: 4px;
+
+  span {
+    background: currentColor;
+    border-radius: 50%;
+    animation: dotPulse 1.4s ease-in-out infinite;
+
+    &:nth-child(1) { animation-delay: 0s; }
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
+  }
+}
+
+@keyframes dotPulse {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// Bars
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+
+  span {
+    background: currentColor;
+    animation: barPulse 1s ease-in-out infinite;
+
+    &:nth-child(1) { animation-delay: 0s; }
+    &:nth-child(2) { animation-delay: 0.1s; }
+    &:nth-child(3) { animation-delay: 0.2s; }
+    &:nth-child(4) { animation-delay: 0.3s; }
+    &:nth-child(5) { animation-delay: 0.4s; }
+  }
+}
+
+@keyframes barPulse {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+
+.loading-text {
+  color: var(--text-secondary);
+  font-weight: var(--font-medium);
+}

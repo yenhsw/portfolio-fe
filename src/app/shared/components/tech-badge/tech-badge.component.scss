@@ -1,0 +1,77 @@
+// ============================================================
+// TECH BADGE STYLES
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+.tech-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-sans);
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+
+  // Sizes
+  &--sm {
+    height: var(--badge-height-sm);
+    padding-inline: var(--space-2);
+    font-size: var(--text-xs);
+  }
+
+  &--md {
+    height: var(--badge-height-md);
+    padding-inline: var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  &--lg {
+    height: var(--badge-height-lg);
+    padding-inline: var(--space-4);
+    font-size: var(--text-base);
+  }
+
+  // Variants
+  &--default {
+    background: var(--surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+
+  &--primary {
+    background: var(--primary-muted);
+    color: var(--primary);
+    border: 1px solid var(--border-accent);
+  }
+
+  &--secondary {
+    background: var(--secondary-muted);
+    color: var(--secondary);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+  }
+
+  &--success {
+    background: var(--success-muted);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+
+  &--warning {
+    background: var(--warning-muted);
+    color: var(--warning);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  &--danger {
+    background: var(--danger-muted);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  &--info {
+    background: var(--info-muted);
+    color: var(--info);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+}

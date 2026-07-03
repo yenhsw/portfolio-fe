@@ -1,0 +1,55 @@
+// ============================================================
+// SKELETON STYLES
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+.skeleton {
+  display: block;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+
+  // Shimmer effect
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(0, 245, 255, 0.05),
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  // Sizes
+  &--sm { height: 12px; }
+  &--md { height: 20px; }
+  &--lg { height: 32px; }
+
+  // Variants
+  &--text {
+    border-radius: var(--radius-sm);
+  }
+
+  &--circle {
+    border-radius: 50%;
+  }
+
+  &--rect {
+    border-radius: var(--radius-lg);
+  }
+
+  &--block {
+    border-radius: var(--radius-xl);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

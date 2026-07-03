@@ -1,0 +1,187 @@
+<app-admin-page
+  title="Profile Management"
+  subtitle="Manage your personal information and public portfolio data"
+  [icon]="pageIcon"
+>
+  <div class="profile-layout" [class.visible]="isReady()">
+    <div class="profile-form-section">
+      <section class="form-section">
+        <h3 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          Basic Information
+        </h3>
+
+        <div class="form-grid">
+          <div class="form-field avatar-field">
+            <label class="field-label">Avatar</label>
+            <div class="avatar-upload">
+              <div class="avatar-preview" [style.background-image]="profile().avatar ? 'url(' + profile().avatar + ')' : ''">
+                @if (!profile().avatar) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  </svg>
+                }
+              </div>
+              <input type="file" accept="image/*" class="file-input" (change)="onAvatarChange($event)" />
+              <button class="upload-btn" (click)="triggerAvatarUpload()">Upload</button>
+            </div>
+          </div>
+
+          <div class="form-field bg-field">
+            <label class="field-label">Background Image</label>
+            <div class="bg-upload">
+              <div class="bg-preview" [style.background-image]="profile().background ? 'url(' + profile().background + ')' : ''">
+                @if (!profile().background) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                }
+              </div>
+              <input type="file" accept="image/*" class="file-input" (change)="onBackgroundChange($event)" />
+              <button class="upload-btn" (click)="triggerBgUpload()">Upload</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid two-cols">
+          <div class="form-field">
+            <label class="field-label">Full Name <span class="required">*</span></label>
+            <input type="text" class="field-input" [(ngModel)]="profile().fullName"
+              (ngModelChange)="store.updateBasicInfo({ fullName: $event })" placeholder="Enter your full name" />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Display Name</label>
+            <input type="text" class="field-input" [(ngModel)]="profile().displayName"
+              (ngModelChange)="store.updateBasicInfo({ displayName: $event })" placeholder="How should we display" />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Job Title <span class="required">*</span></label>
+            <input type="text" class="field-input" [(ngModel)]="profile().jobTitle"
+              (ngModelChange)="store.updateBasicInfo({ jobTitle: $event })" placeholder="e.g. Full Stack Developer" />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Company</label>
+            <input type="text" class="field-input" [(ngModel)]="profile().company"
+              (ngModelChange)="store.updateBasicInfo({ company: $event })" placeholder="Where do you work" />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Experience (Years)</label>
+            <input type="number" class="field-input" [(ngModel)]="profile().experience"
+              (ngModelChange)="store.updateBasicInfo({ experience: $event })" min="0" max="50" />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Location</label>
+            <input type="text" class="field-input" [(ngModel)]="profile().location"
+              (ngModelChange)="store.updateBasicInfo({ location: $event })" placeholder="City, Country" />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Email <span class="required">*</span></label>
+            <input type="email" class="field-input" [(ngModel)]="profile().email"
+              (ngModelChange)="store.updateBasicInfo({ email: $event })" placeholder="your.email@example.com" />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Phone</label>
+            <input type="tel" class="field-input" [(ngModel)]="profile().phone"
+              (ngModelChange)="store.updateBasicInfo({ phone: $event })" placeholder="+84 123 456 789" />
+          </div>
+          <div class="form-field full-width">
+            <label class="field-label">Website</label>
+            <input type="url" class="field-input" [(ngModel)]="profile().website"
+              (ngModelChange)="store.updateBasicInfo({ website: $event })" placeholder="https://yourwebsite.com" />
+          </div>
+          <div class="form-field full-width">
+            <label class="field-label">CV URL</label>
+            <input type="url" class="field-input" [(ngModel)]="profile().cvUrl"
+              (ngModelChange)="store.updateBasicInfo({ cvUrl: $event })" placeholder="Link to your CV (PDF)" />
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h3 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          </svg>
+          Introduction
+        </h3>
+        <div class="form-field">
+          <label class="field-label">Short Introduction</label>
+          <textarea class="field-textarea" [(ngModel)]="profile().shortIntro"
+            (ngModelChange)="store.updateIntroduction({ shortIntro: $event })" placeholder="A brief intro..." rows="2"></textarea>
+        </div>
+        <div class="form-field">
+          <label class="field-label">Long Introduction</label>
+          <textarea class="field-textarea" [(ngModel)]="profile().longIntro"
+            (ngModelChange)="store.updateIntroduction({ longIntro: $event })" placeholder="Your detailed intro..." rows="5"></textarea>
+        </div>
+        <div class="form-field">
+          <label class="field-label">Career Objective</label>
+          <textarea class="field-textarea" [(ngModel)]="profile().careerObjective"
+            (ngModelChange)="store.updateIntroduction({ careerObjective: $event })" placeholder="Your career goals" rows="2"></textarea>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h3 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Tech Stack
+        </h3>
+        <div class="tech-grid">
+          @for (tech of availableTechs; track tech) {
+            <label class="tech-checkbox">
+              <input type="checkbox" [checked]="isTechSelected(tech)" (change)="toggleTech(tech)" />
+              <span class="tech-label">{{ tech }}</span>
+            </label>
+          }
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <app-admin-button variant="secondary" (click)="onReset()" [disabled]="!store.hasChanges()">Reset</app-admin-button>
+        <app-admin-button variant="primary" (click)="onSave()" [loading]="store.saving()" [disabled]="!store.hasChanges()">Save Changes</app-admin-button>
+      </div>
+    </div>
+
+    <div class="profile-preview-section">
+      <div class="preview-header">
+        <h3 class="preview-title">Live Preview</h3>
+        <span class="preview-badge">Updates in real-time</span>
+      </div>
+      <div class="preview-card">
+        <div class="preview-bg" [style.background-image]="profile().background ? 'url(' + profile().background + ')' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'"></div>
+        <div class="preview-avatar" [style.background-image]="profile().avatar ? 'url(' + profile().avatar + ')' : ''">
+          @if (!profile().avatar) {
+            <span class="avatar-initial">{{ profile().displayName.charAt(0) || 'U' }}</span>
+          }
+        </div>
+        <div class="preview-info">
+          <h2 class="preview-name">{{ profile().displayName || profile().fullName || 'Your Name' }}</h2>
+          <p class="preview-job">{{ profile().jobTitle || 'Your Job Title' }}</p>
+          <p class="preview-company">{{ profile().company }}</p>
+        </div>
+        <div class="preview-intro">
+          <p>{{ profile().shortIntro || 'Your short introduction will appear here...' }}</p>
+        </div>
+        @if (profile().techStack && profile().techStack.length > 0) {
+          <div class="preview-tech">
+            @for (tech of profile().techStack; track tech) {
+              <span class="preview-tech-badge">{{ tech }}</span>
+            }
+          </div>
+        }
+        <div class="preview-contact">
+          @if (profile().email) {
+            <span class="contact-item">{{ profile().email }}</span>
+          }
+          @if (profile().location) {
+            <span class="contact-item">{{ profile().location }}</span>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</app-admin-page>

@@ -1,0 +1,157 @@
+// ============================================================
+// SECTION TITLE STYLES
+// Cyber Technology / Futuristic / Neon Glow
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+.section-title {
+  margin-bottom: var(--spacing-12);
+
+  // ============================================================
+  // LABEL
+  // ============================================================
+
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    font-family: $font-family-mono;
+    font-size: var(--font-size-sm);
+    font-weight: $font-weight-medium;
+    color: var(--color-accent-primary);
+    text-transform: uppercase;
+    letter-spacing: $letter-spacing-wider;
+    margin-bottom: var(--spacing-3);
+
+    .label-icon {
+      display: flex;
+      width: 16px;
+      height: 16px;
+
+      svg {
+        width: 100%;
+        height: 100%;
+      }
+    }
+  }
+
+  // ============================================================
+  // HEADING
+  // ============================================================
+
+  .section-heading {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    font-family: $font-family-secondary;
+    font-size: var(--font-size-3xl);
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    line-height: $line-height-tight;
+    margin: 0;
+
+    @media (min-width: 768px) {
+      font-size: var(--font-size-4xl);
+    }
+
+    @media (min-width: 1024px) {
+      font-size: var(--font-size-5xl);
+    }
+
+    .heading-line {
+      display: none;
+    }
+
+    .heading-highlight {
+      color: var(--color-accent-primary);
+      text-shadow: 0 0 20px rgba(0, 245, 255, 0.25);
+    }
+  }
+
+  // ============================================================
+  // SUBTITLE
+  // ============================================================
+
+  .section-subtitle {
+    margin-top: var(--spacing-4);
+    font-size: var(--font-size-base);
+    color: $color-text-secondary;
+    max-width: 600px;
+    line-height: $line-height-relaxed;
+
+    @media (min-width: 768px) {
+      font-size: var(--font-size-lg);
+    }
+  }
+
+  // ============================================================
+  // ALIGNMENT
+  // ============================================================
+
+  &--left {
+    text-align: left;
+
+    .section-subtitle {
+      margin-left: 0;
+    }
+  }
+
+  &--center {
+    text-align: center;
+
+    .section-subtitle {
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  &--right {
+    text-align: right;
+
+    .section-subtitle {
+      margin-left: auto;
+    }
+  }
+}
+
+// ============================================================
+// DECORATIVE ELEMENTS
+// ============================================================
+
+.section-title {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-accent-primary),
+      transparent
+    );
+    opacity: 0.5;
+  }
+}
+
+// ============================================================
+// RESPONSIVE
+// ============================================================
+
+@media (max-width: 768px) {
+  .section-title {
+    margin-bottom: var(--spacing-8);
+
+    .section-heading {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+}

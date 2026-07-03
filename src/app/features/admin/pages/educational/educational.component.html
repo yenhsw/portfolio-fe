@@ -1,0 +1,471 @@
+<app-admin-page
+  [title]="'admin.pages.educational.title' | t"
+  [subtitle]="'admin.pages.educational.subtitle' | t"
+  [icon]="pageIcon"
+>
+  <div class="edu-type-bar" [class.visible]="isReady()">
+    <div class="type-info">
+      <span class="type-label">{{ 'admin.pages.educational.sectionType' | t }}</span>
+      <span class="type-badge">{{ sectionType }}</span>
+      <span class="type-name">{{ sectionTypeLabel }}</span>
+    </div>
+    <p class="type-hint">{{ 'admin.pages.educational.sectionTypeHint' | t }}</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="edu-tabs" [class.visible]="isReady()">
+    @for (tab of tabList(); track tab.key) {
+      <button
+        class="edu-tab"
+        [class.active]="activeTab() === tab.key"
+        (click)="setTab(tab.key)"
+      >
+        <span class="tab-label">{{ tab.label }}</span>
+        <span class="tab-desc">{{ tab.description }}</span>
+      </button>
+    }
+  </div>
+
+  <div class="edu-content" [class.visible]="isReady()">
+
+    <!-- TAB: Section Config -->
+    @if (activeTab() === 'section') {
+      <div class="panel">
+        <div class="panel-header">
+          <h3>{{ 'admin.pages.educational.sectionPanel' | t }}</h3>
+          <app-admin-button variant="primary" (click)="saveSection()">{{ 'admin.common.saveConfig' | t }}</app-admin-button>
+        </div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>{{ 'admin.pages.educational.sectionType' | t }}</label>
+            <input type="text" class="field-input field-readonly" [value]="sectionType" readonly />
+          </div>
+          <div class="form-field">
+            <label>Section Tag</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.sectionTag" placeholder="My Path" />
+          </div>
+          <div class="form-field">
+            <label>Heading (Accent)</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.titleAccent" placeholder="EDUCATIONAL" />
+          </div>
+          <div class="form-field">
+            <label>Heading (Text)</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.titleText" placeholder="BACKGROUND" />
+          </div>
+          <div class="form-field full">
+            <label>Section description</label>
+            <textarea class="field-textarea" rows="2" [(ngModel)]="sectionForm.subtitle"></textarea>
+          </div>
+          <div class="form-field">
+            <label>Certificates divider</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.certificatesDividerText" />
+          </div>
+          <div class="form-field">
+            <label>Certificates heading</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.certificatesSubTitle" />
+          </div>
+          <div class="form-field">
+            <label>Goals divider</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.futureGoalsDividerText" />
+          </div>
+          <div class="form-field">
+            <label>Goals heading</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.futureGoalsSubTitle" />
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- TAB: Highlights -->
+    @if (activeTab() === 'highlights') {
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>{{ 'admin.pages.educational.highlightsPanel' | t }}</h3>
+            <p class="panel-desc">{{ 'admin.pages.educational.highlightsDesc' | t }}</p>
+          </div>
+          <app-admin-button variant="primary" (click)="openAdd('highlights')">{{ 'admin.pages.educational.addStatistic' | t }}</app-admin-button>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'admin.common.icon' | t }}</th>
+                <th>{{ 'admin.common.value' | t }}</th>
+                <th>{{ 'admin.pages.educational.itemName' | t }}</th>
+                <th>{{ 'admin.common.order' | t }}</th>
+                <th>{{ 'admin.common.status' | t }}</th>
+                <th>{{ 'admin.common.actions' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.sortedHighlights(); track item.id) {
+                <tr [class.inactive-row]="!item.isActive">
+                  <td><span class="cell-icon">{{ item.icon }}</span></td>
+                  <td><strong>{{ displayValue(item) }}</strong></td>
+                  <td>{{ item.label }}</td>
+                  <td>{{ item.sortOrder }}</td>
+                  <td>
+                    <label class="status-switch" [class.inactive]="!item.isActive">
+                      <input
+                        type="checkbox"
+                        [checked]="item.isActive"
+                        (change)="setStatus('highlights', item.id, $any($event.target).checked)"
+                      />
+                      <span class="switch-track"><span class="switch-thumb"></span></span>
+                      <span class="switch-text">{{ item.isActive ? 'Active' : 'Inactive' }}</span>
+                    </label>
+                  </td>
+                  <td class="actions">
+                    <button class="action-btn" (click)="openEdit('highlights', item.id)">Edit</button>
+                    <button class="action-btn danger" (click)="deleteItem('highlights', item.id)">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB: Timeline -->
+    @if (activeTab() === 'timeline') {
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Education timeline</h3>
+            <p class="panel-desc">School/center, course, year, description, languages studied.</p>
+          </div>
+          <app-admin-button variant="primary" (click)="openAdd('timeline')">+ Add education entry</app-admin-button>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Icon</th>
+                <th>School / Center</th>
+                <th>Course</th>
+                <th>Year</th>
+                <th>Language</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.sortedTimeline(); track item.id) {
+                <tr [class.inactive-row]="!item.isActive">
+                  <td><span class="cell-icon">{{ item.icon }}</span></td>
+                  <td>{{ item.institutionName }}</td>
+                  <td>{{ item.courseName }}</td>
+                  <td>{{ item.year }}</td>
+                  <td>
+                    <div class="tag-list">
+                      @for (tech of item.technologies; track tech) {
+                        <span class="mini-tag">{{ tech }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td>{{ item.sortOrder }}</td>
+                  <td>
+                    <label class="status-switch" [class.inactive]="!item.isActive">
+                      <input
+                        type="checkbox"
+                        [checked]="item.isActive"
+                        (change)="setStatus('timeline', item.id, $any($event.target).checked)"
+                      />
+                      <span class="switch-track"><span class="switch-thumb"></span></span>
+                      <span class="switch-text">{{ item.isActive ? 'Active' : 'Inactive' }}</span>
+                    </label>
+                  </td>
+                  <td class="actions">
+                    <button class="action-btn" (click)="openEdit('timeline', item.id)">Edit</button>
+                    <button class="action-btn danger" (click)="deleteItem('timeline', item.id)">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB: Certificates -->
+    @if (activeTab() === 'certificates') {
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Certificates</h3>
+            <p class="panel-desc">Name, issuing organization, year, tag.</p>
+          </div>
+          <app-admin-button variant="primary" (click)="openAdd('certificates')">+ Add certificate</app-admin-button>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Icon</th>
+                <th>Name</th>
+                <th>Organization</th>
+                <th>Year</th>
+                <th>Tag</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.sortedCertificates(); track item.id) {
+                <tr [class.inactive-row]="!item.isActive">
+                  <td><span class="cell-icon">{{ item.icon }}</span></td>
+                  <td>{{ item.name }}</td>
+                  <td>{{ item.provider }}</td>
+                  <td>{{ item.year }}</td>
+                  <td><span class="mini-tag accent">{{ item.badge }}</span></td>
+                  <td>{{ item.sortOrder }}</td>
+                  <td>
+                    <label class="status-switch" [class.inactive]="!item.isActive">
+                      <input
+                        type="checkbox"
+                        [checked]="item.isActive"
+                        (change)="setStatus('certificates', item.id, $any($event.target).checked)"
+                      />
+                      <span class="switch-track"><span class="switch-thumb"></span></span>
+                      <span class="switch-text">{{ item.isActive ? 'Active' : 'Inactive' }}</span>
+                    </label>
+                  </td>
+                  <td class="actions">
+                    <button class="action-btn" (click)="openEdit('certificates', item.id)">Edit</button>
+                    <button class="action-btn danger" (click)="deleteItem('certificates', item.id)">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- TAB: Future Goals -->
+    @if (activeTab() === 'future-goals') {
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Future goals</h3>
+            <p class="panel-desc">Icon, goal name, description. Configure divider/heading in Section Config tab.</p>
+          </div>
+          <app-admin-button variant="primary" (click)="openAdd('future-goals')">+ Add goal</app-admin-button>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Icon</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.sortedFutureGoals(); track item.id) {
+                <tr [class.inactive-row]="!item.isActive">
+                  <td><span class="cell-icon">{{ item.icon }}</span></td>
+                  <td>{{ item.title }}</td>
+                  <td class="desc-cell">{{ item.description }}</td>
+                  <td>{{ item.sortOrder }}</td>
+                  <td>
+                    <label class="status-switch" [class.inactive]="!item.isActive">
+                      <input
+                        type="checkbox"
+                        [checked]="item.isActive"
+                        (change)="setStatus('future-goals', item.id, $any($event.target).checked)"
+                      />
+                      <span class="switch-track"><span class="switch-thumb"></span></span>
+                      <span class="switch-text">{{ item.isActive ? 'Active' : 'Inactive' }}</span>
+                    </label>
+                  </td>
+                  <td class="actions">
+                    <button class="action-btn" (click)="openEdit('future-goals', item.id)">Edit</button>
+                    <button class="action-btn danger" (click)="deleteItem('future-goals', item.id)">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Confirm Delete -->
+  <app-admin-confirm-dialog
+    [isOpen]="confirmOpen()"
+    [config]="confirmConfig()"
+    (confirmed)="onConfirmDelete()"
+    (cancelled)="closeConfirm()"
+  />
+
+  <!-- Form Dialog -->
+  <app-admin-dialog
+    [isOpen]="dialogMode() !== null"
+    [hasCustomFooter]="true"
+    [config]="formDialogConfig()"
+    (closed)="closeDialog()"
+  >
+    <div class="form-dialog">
+      @if (dialogEntity() === 'highlights') {
+        <div class="form-grid">
+          <div class="form-field icon-field">
+            <label>Icon</label>
+            <div class="icon-input-row">
+              <span class="icon-preview">{{ highlightForm.icon || '📊' }}</span>
+              <input type="text" class="field-input" [(ngModel)]="highlightForm.icon" placeholder="🔗" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Value (number)</label>
+            <input type="number" class="field-input" [(ngModel)]="highlightForm.valueNumber" min="0" />
+          </div>
+          <div class="form-field">
+            <label>Suffix</label>
+            <input type="text" class="field-input" [(ngModel)]="highlightForm.valueSuffix" placeholder="+" />
+          </div>
+          <div class="form-field">
+            <label>Display order</label>
+            <input type="number" class="field-input" [(ngModel)]="highlightForm.sortOrder" min="1" />
+          </div>
+          <div class="form-field full">
+            <label>Item name <span class="req">*</span></label>
+            <input type="text" class="field-input" [(ngModel)]="highlightForm.label" placeholder="REST APIs Built" />
+          </div>
+        </div>
+      }
+
+      @if (dialogEntity() === 'timeline') {
+        <div class="form-grid">
+          <div class="form-field icon-field">
+            <label>Icon timeline</label>
+            <div class="icon-input-row">
+              <span class="icon-preview">{{ timelineForm.icon || '🎓' }}</span>
+              <input type="text" class="field-input" [(ngModel)]="timelineForm.icon" placeholder="🎓" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Academic year</label>
+            <input type="text" class="field-input" [(ngModel)]="timelineForm.year" placeholder="2021" />
+          </div>
+          <div class="form-field">
+            <label>Display order</label>
+            <input type="number" class="field-input" [(ngModel)]="timelineForm.sortOrder" min="1" />
+          </div>
+          <div class="form-field full">
+            <label>School / center name <span class="req">*</span></label>
+            <input type="text" class="field-input" [(ngModel)]="timelineForm.institutionName" />
+          </div>
+          <div class="form-field full">
+            <label>Course name</label>
+            <input type="text" class="field-input" [(ngModel)]="timelineForm.courseName" />
+          </div>
+          <div class="form-field full">
+            <label>Description</label>
+            <textarea class="field-textarea" rows="4" [(ngModel)]="timelineForm.description"></textarea>
+          </div>
+        </div>
+        <div class="tech-section">
+          <div class="section-label">
+            <span>Languages / skills studied</span>
+            <span class="section-hint">Press Enter to add quickly</span>
+          </div>
+          <div class="tech-add-row">
+            <input type="text" class="field-input" [(ngModel)]="newTech" placeholder="Java, C++, SQL..." (keyup.enter)="addTechnology()" />
+            <app-admin-button variant="secondary" (click)="addTechnology()">+ Add</app-admin-button>
+          </div>
+          @if (timelineForm.technologies.length > 0) {
+            <div class="tech-chips">
+              @for (tech of timelineForm.technologies; track tech; let i = $index) {
+                <span class="tech-chip">
+                  {{ tech }}
+                  <button type="button" class="chip-remove" (click)="removeTechnology(i)" aria-label="Delete">×</button>
+                </span>
+              }
+            </div>
+          } @else {
+            <p class="tech-empty">No skills yet. Add at least one item if needed.</p>
+          }
+        </div>
+      }
+
+      @if (dialogEntity() === 'certificates') {
+        <div class="form-grid">
+          <div class="form-field icon-field">
+            <label>Icon</label>
+            <div class="icon-input-row">
+              <span class="icon-preview">{{ certificateForm.icon || '🏆' }}</span>
+              <input type="text" class="field-input" [(ngModel)]="certificateForm.icon" placeholder="🏆" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Year obtained</label>
+            <input type="text" class="field-input" [(ngModel)]="certificateForm.year" />
+          </div>
+          <div class="form-field">
+            <label>Display order</label>
+            <input type="number" class="field-input" [(ngModel)]="certificateForm.sortOrder" min="1" />
+          </div>
+          <div class="form-field full">
+            <label>Certificate name <span class="req">*</span></label>
+            <input type="text" class="field-input" [(ngModel)]="certificateForm.name" />
+          </div>
+          <div class="form-field full">
+            <label>Issuing organization</label>
+            <input type="text" class="field-input" [(ngModel)]="certificateForm.provider" />
+          </div>
+          <div class="form-field full">
+            <label>Tag</label>
+            <input type="text" class="field-input" [(ngModel)]="certificateForm.badge" placeholder="Associate" />
+          </div>
+        </div>
+      }
+
+      @if (dialogEntity() === 'future-goals') {
+        <div class="form-grid">
+          <div class="form-field icon-field">
+            <label>Icon</label>
+            <div class="icon-input-row">
+              <span class="icon-preview">{{ futureGoalForm.icon || '🎯' }}</span>
+              <input type="text" class="field-input" [(ngModel)]="futureGoalForm.icon" placeholder="☁️" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Display order</label>
+            <input type="number" class="field-input" [(ngModel)]="futureGoalForm.sortOrder" min="1" />
+          </div>
+          <div class="form-field full">
+            <label>Goal name <span class="req">*</span></label>
+            <input type="text" class="field-input" [(ngModel)]="futureGoalForm.title" />
+          </div>
+          <div class="form-field full">
+            <label>Description</label>
+            <textarea class="field-textarea" rows="4" [(ngModel)]="futureGoalForm.description"></textarea>
+          </div>
+        </div>
+      }
+    </div>
+
+    <ng-container slot="footer">
+      <div class="form-dialog-footer">
+        <label class="status-switch dialog-status" [class.inactive]="!formIsActive">
+          <input type="checkbox" [(ngModel)]="formIsActive" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+          <span class="switch-text">{{ formIsActive ? 'Active — visible on site' : 'Inactive — hidden on site' }}</span>
+        </label>
+        <div class="dialog-actions">
+          <app-admin-button variant="secondary" (click)="closeDialog()">Cancel</app-admin-button>
+          <app-admin-button variant="primary" (click)="saveDialog()">Save</app-admin-button>
+        </div>
+      </div>
+    </ng-container>
+  </app-admin-dialog>
+</app-admin-page>

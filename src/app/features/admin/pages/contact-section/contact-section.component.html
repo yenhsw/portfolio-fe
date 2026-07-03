@@ -1,0 +1,334 @@
+<app-admin-page
+  [title]="'admin.pages.contact.title' | t"
+  [subtitle]="'admin.pages.contact.subtitle' | t"
+  [icon]="pageIcon"
+>
+  <div class="cs-type-bar" [class.visible]="isReady()">
+    <div class="type-info">
+      <span class="type-label">{{ 'admin.pages.contact.sectionType' | t }}</span>
+      <span class="type-badge">{{ sectionType }}</span>
+      <span class="type-name">{{ sectionTypeLabel }}</span>
+    </div>
+    <p class="type-hint">{{ 'admin.pages.contact.sectionTypeHint' | t }}</p>
+  </div>
+
+  <div class="cs-tabs" [class.visible]="isReady()">
+    @for (tab of tabList(); track tab.key) {
+      <button class="cs-tab" [class.active]="activeTab() === tab.key" (click)="setTab(tab.key)">
+        <span class="tab-label">{{ tab.label }}</span>
+        <span class="tab-desc">{{ tab.description }}</span>
+      </button>
+    }
+  </div>
+
+  <div class="cs-content" [class.visible]="isReady()">
+    @if (activeTab() === 'section') {
+      <div class="panel">
+        <div class="panel-header">
+          <h3>{{ 'admin.pages.contact.sectionPanel' | t }}</h3>
+          <app-admin-button variant="primary" (click)="saveSection()">{{ 'admin.common.saveConfig' | t }}</app-admin-button>
+        </div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>{{ 'admin.pages.contact.sectionType' | t }}</label>
+            <input type="text" class="field-input field-readonly" [value]="sectionType" readonly />
+          </div>
+          <div class="form-field">
+            <label>Section Tag</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.sectionTag" placeholder="Get In Touch" />
+          </div>
+          <div class="form-field">
+            <label>Heading (Accent)</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.titleAccent" placeholder="LET'S BUILD" />
+          </div>
+          <div class="form-field">
+            <label>Heading (Text)</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.titleText" placeholder="SOMETHING AMAZING" />
+          </div>
+          <div class="form-field full">
+            <label>Section description</label>
+            <textarea class="field-textarea" rows="2" [(ngModel)]="sectionForm.subtitle"></textarea>
+          </div>
+          <div class="form-field">
+            <label>Info block heading</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.infoTitle" placeholder="Contact Information" />
+          </div>
+          <div class="form-field">
+            <label>Form heading</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.formTitle" placeholder="Send Me a Message" />
+          </div>
+          <div class="form-field full">
+            <label>Social heading</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.socialTitle" placeholder="Connect With Me" />
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'contact-info') {
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Contact info</h3>
+            <p class="panel-desc">Email, Phone, Location cards... Only Active items appear on the site.</p>
+          </div>
+          <app-admin-button variant="primary" (click)="openAdd('contact-info')">+ Add info</app-admin-button>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Label</th>
+                <th>Value</th>
+                <th>Link</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.sortedContactInfo(); track item.id) {
+                <tr [class.inactive-row]="!item.isActive">
+                  <td>{{ item.label }}</td>
+                  <td>{{ item.value }}</td>
+                  <td class="link-cell">{{ item.link || '—' }}</td>
+                  <td>{{ item.sortOrder }}</td>
+                  <td>
+                    <label class="status-switch" [class.inactive]="!item.isActive">
+                      <input type="checkbox" [checked]="item.isActive" (change)="setStatus('contact-info', item.id, $any($event.target).checked)" />
+                      <span class="switch-track"><span class="switch-thumb"></span></span>
+                      <span class="switch-text">{{ item.isActive ? 'Active' : 'Inactive' }}</span>
+                    </label>
+                  </td>
+                  <td class="actions">
+                    <button class="action-btn" (click)="openEdit('contact-info', item.id)">Edit</button>
+                    <button class="action-btn danger" (click)="deleteItem('contact-info', item.id)">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'social') {
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Social links</h3>
+            <p class="panel-desc">Icon + accent color (--social-color) on Home.</p>
+          </div>
+          <app-admin-button variant="primary" (click)="openAdd('social')">+ Add social</app-admin-button>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>URL</th>
+                <th>Color</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.sortedSocialLinks(); track item.id) {
+                <tr [class.inactive-row]="!item.isActive">
+                  <td>{{ item.name }}</td>
+                  <td class="link-cell">{{ item.url }}</td>
+                  <td>
+                    <span class="color-preview" [style.background]="item.color"></span>
+                    {{ item.color }}
+                  </td>
+                  <td>{{ item.sortOrder }}</td>
+                  <td>
+                    <label class="status-switch" [class.inactive]="!item.isActive">
+                      <input type="checkbox" [checked]="item.isActive" (change)="setStatus('social', item.id, $any($event.target).checked)" />
+                      <span class="switch-track"><span class="switch-thumb"></span></span>
+                      <span class="switch-text">{{ item.isActive ? 'Active' : 'Inactive' }}</span>
+                    </label>
+                  </td>
+                  <td class="actions">
+                    <button class="action-btn" (click)="openEdit('social', item.id)">Edit</button>
+                    <button class="action-btn danger" (click)="deleteItem('social', item.id)">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'settings') {
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Map, CTA & Form</h3>
+          <app-admin-button variant="primary" (click)="saveSettings()">Save config</app-admin-button>
+        </div>
+
+        <div class="settings-block">
+          <h4>Map placeholder</h4>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Icon (emoji)</label>
+              <input type="text" class="field-input" [(ngModel)]="mapForm.icon" placeholder="📍" />
+            </div>
+            <div class="form-field">
+              <label class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="mapForm.isActive" />
+                Show map on Home
+              </label>
+            </div>
+            <div class="form-field full">
+              <label>Display address</label>
+              <input type="text" class="field-input" [(ngModel)]="mapForm.text" />
+            </div>
+            <div class="form-field full">
+              <label>Google Map URL (for future embed)</label>
+              <input type="url" class="field-input" [(ngModel)]="mapForm.googleMapUrl" placeholder="https://maps.google.com/..." />
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <h4>Section bottom CTA</h4>
+          <div class="form-grid">
+            <div class="form-field full">
+              <label>CTA heading</label>
+              <input type="text" class="field-input" [(ngModel)]="ctaForm.title" />
+            </div>
+            <div class="form-field full">
+              <label>CTA description</label>
+              <textarea class="field-textarea" rows="2" [(ngModel)]="ctaForm.description"></textarea>
+            </div>
+            <div class="form-field">
+              <label>Primary button — Label</label>
+              <input type="text" class="field-input" [(ngModel)]="ctaForm.primaryLabel" />
+            </div>
+            <div class="form-field">
+              <label>Primary button — Link</label>
+              <input type="text" class="field-input" [(ngModel)]="ctaForm.primaryLink" placeholder="#contact" />
+            </div>
+            <div class="form-field">
+              <label>Secondary button — Label</label>
+              <input type="text" class="field-input" [(ngModel)]="ctaForm.secondaryLabel" />
+            </div>
+            <div class="form-field">
+              <label>Secondary button — Link (CV URL)</label>
+              <input type="text" class="field-input" [(ngModel)]="ctaForm.secondaryLink" placeholder="/assets/cv/resume.pdf" />
+            </div>
+            <div class="form-field">
+              <label class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="ctaForm.isActive" />
+                Show CTA on Home
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <h4>Contact form</h4>
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="formSettings.enabled" />
+                Enable contact form
+              </label>
+            </div>
+            <div class="form-field">
+              <label>Max message characters</label>
+              <input type="number" class="field-input" [(ngModel)]="formSettings.messageMaxLength" min="100" max="2000" />
+            </div>
+            <div class="form-field full">
+              <label>Success message</label>
+              <input type="text" class="field-input" [(ngModel)]="formSettings.successMessage" />
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <app-admin-confirm-dialog
+    [isOpen]="confirmOpen()"
+    [config]="confirmConfig()"
+    (confirmed)="onConfirmDelete()"
+    (cancelled)="closeConfirm()"
+  />
+
+  <app-admin-dialog
+    [isOpen]="dialogMode() !== null"
+    [hasCustomFooter]="true"
+    [config]="formDialogConfig()"
+    (closed)="closeDialog()"
+  >
+    <div class="form-dialog">
+      @if (dialogEntity() === 'contact-info') {
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Label <span class="req">*</span></label>
+            <input type="text" class="field-input" [(ngModel)]="infoForm.label" placeholder="Email" />
+          </div>
+          <div class="form-field">
+            <label>Display order</label>
+            <input type="number" class="field-input" [(ngModel)]="infoForm.sortOrder" min="1" />
+          </div>
+          <div class="form-field full">
+            <label>Display value <span class="req">*</span></label>
+            <input type="text" class="field-input" [(ngModel)]="infoForm.value" placeholder="yenhs.dev@gmail.com" />
+          </div>
+          <div class="form-field full">
+            <label>Link (mailto:, tel:, https://...)</label>
+            <input type="text" class="field-input" [(ngModel)]="infoForm.link" placeholder="mailto:..." />
+          </div>
+          <div class="form-field full">
+            <label>Icon SVG</label>
+            <textarea class="field-textarea code-area" rows="4" [(ngModel)]="infoForm.iconSvg"></textarea>
+          </div>
+        </div>
+      }
+
+      @if (dialogEntity() === 'social') {
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Name <span class="req">*</span></label>
+            <input type="text" class="field-input" [(ngModel)]="socialForm.name" placeholder="GitHub" />
+          </div>
+          <div class="form-field">
+            <label>Accent color</label>
+            <input type="color" class="field-input color-input" [(ngModel)]="socialForm.color" />
+          </div>
+          <div class="form-field">
+            <label>Display order</label>
+            <input type="number" class="field-input" [(ngModel)]="socialForm.sortOrder" min="1" />
+          </div>
+          <div class="form-field full">
+            <label>URL <span class="req">*</span></label>
+            <input type="url" class="field-input" [(ngModel)]="socialForm.url" placeholder="https://github.com/..." />
+          </div>
+          <div class="form-field full">
+            <label>Icon SVG</label>
+            <textarea class="field-textarea code-area" rows="4" [(ngModel)]="socialForm.iconSvg"></textarea>
+          </div>
+        </div>
+      }
+    </div>
+
+    <ng-container slot="footer">
+      <div class="form-dialog-footer">
+        <label class="status-switch dialog-status" [class.inactive]="!formIsActive">
+          <input type="checkbox" [(ngModel)]="formIsActive" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+          <span class="switch-text">{{ formIsActive ? 'Active — visible on site' : 'Inactive — hidden on site' }}</span>
+        </label>
+        <div class="dialog-actions">
+          <app-admin-button variant="secondary" (click)="closeDialog()">Cancel</app-admin-button>
+          <app-admin-button variant="primary" (click)="saveDialog()">Save</app-admin-button>
+        </div>
+      </div>
+    </ng-container>
+  </app-admin-dialog>
+</app-admin-page>

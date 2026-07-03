@@ -1,0 +1,44 @@
+// ============================================================
+// TECH TITLE STYLES
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+.tech-title {
+  font-family: var(--font-display);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+  margin: 0;
+
+  // Size variants
+  &--sm { font-size: var(--text-xl); }
+  &--md { font-size: var(--text-2xl); }
+  &--lg { font-size: var(--text-3xl); }
+  &--xl { font-size: var(--text-4xl); }
+  &--2xl { font-size: var(--text-5xl); }
+  &--3xl { font-size: var(--text-6xl); }
+
+  // Variant: gradient
+  &--gradient {
+    background: var(--text-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  // Variant: glow
+  &--glow {
+    text-shadow: 0 0 10px var(--glow-primary-md), 0 0 20px var(--glow-primary-sm);
+  }
+}
+
+@media (max-width: 768px) {
+  .tech-title {
+    &--lg { font-size: var(--text-2xl); }
+    &--xl { font-size: var(--text-3xl); }
+    &--2xl { font-size: var(--text-4xl); }
+    &--3xl { font-size: var(--text-5xl); }
+  }
+}

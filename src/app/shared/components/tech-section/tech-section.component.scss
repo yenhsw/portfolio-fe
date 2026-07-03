@@ -1,0 +1,104 @@
+// ============================================================
+// TECH SECTION STYLES
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+.tech-section {
+  position: relative;
+  width: 100%;
+  padding-block: var(--section-padding-y-mobile);
+
+  @media (min-width: 768px) {
+    padding-block: var(--section-padding-y);
+  }
+
+  // Size variants
+  &--sm {
+    padding-block: calc(var(--section-padding-y-mobile) * 0.5);
+
+    @media (min-width: 768px) {
+      padding-block: calc(var(--section-padding-y) * 0.5);
+    }
+  }
+
+  &--md {
+    padding-block: calc(var(--section-padding-y-mobile) * 0.75);
+
+    @media (min-width: 768px) {
+      padding-block: calc(var(--section-padding-y) * 0.75);
+    }
+  }
+
+  &--xl {
+    padding-block: calc(var(--section-padding-y-mobile) * 1.5);
+
+    @media (min-width: 768px) {
+      padding-block: calc(var(--section-padding-y) * 1.5);
+    }
+  }
+
+  &--full {
+    padding-block: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+  }
+
+  // Variant: alternate
+  &--alternate {
+    background: var(--surface);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        var(--border-accent),
+        transparent
+      );
+    }
+  }
+
+  // Variant: gradient
+  &--gradient {
+    background: linear-gradient(
+      180deg,
+      var(--background) 0%,
+      var(--surface) 50%,
+      var(--background) 100%
+    );
+  }
+
+  // Animation
+  &.animate {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+
+    &.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+.section-container {
+  width: 100%;
+  max-width: var(--container-xl);
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+
+  @media (min-width: 768px) {
+    padding-inline: var(--space-6);
+  }
+
+  @media (min-width: 1024px) {
+    padding-inline: var(--space-8);
+  }
+}

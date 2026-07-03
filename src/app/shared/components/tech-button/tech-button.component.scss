@@ -1,0 +1,268 @@
+// ============================================================
+// TECH BUTTON STYLES
+// Cyber technology button with border beam
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+// ============================================================
+// BASE BUTTON
+// ============================================================
+
+.tech-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-weight: var(--font-medium);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+  transition: all var(--transition-base);
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled,
+  &.btn-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+// ============================================================
+// BUTTON CONTENT
+// ============================================================
+
+.btn-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  position: relative;
+  z-index: 1;
+  transition: opacity var(--transition-fast);
+
+  &.loading {
+    opacity: 0;
+  }
+}
+
+.btn-text {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.btn-spinner {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// ============================================================
+// SIZE VARIANTS
+// ============================================================
+
+.tech-btn--sm {
+  height: var(--button-height-sm);
+  padding-inline: var(--space-3);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-md);
+
+  .btn-spinner svg { width: 14px; height: 14px; }
+}
+
+.tech-btn--md {
+  height: var(--button-height-md);
+  padding-inline: var(--space-4);
+  font-size: var(--text-base);
+}
+
+.tech-btn--lg {
+  height: var(--button-height-lg);
+  padding-inline: var(--space-6);
+  font-size: var(--text-lg);
+  border-radius: var(--radius-xl);
+}
+
+.tech-btn--xl {
+  height: var(--button-height-xl);
+  padding-inline: var(--space-8);
+  font-size: var(--text-xl);
+  border-radius: var(--radius-xl);
+}
+
+.tech-btn--icon {
+  aspect-ratio: 1;
+  padding-inline: 0;
+
+  &.tech-btn--sm { width: var(--button-height-sm); }
+  &.tech-btn--md { width: var(--button-height-md); }
+  &.tech-btn--lg { width: var(--button-height-lg); }
+}
+
+// ============================================================
+// VARIANT: PRIMARY
+// ============================================================
+
+.tech-btn--primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--background);
+  border-color: transparent;
+  box-shadow: 0 0 20px var(--glow-primary-sm);
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px var(--glow-primary-md), 0 4px 15px rgba(0, 0, 0, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+// ============================================================
+// VARIANT: SECONDARY
+// ============================================================
+
+.tech-btn--secondary {
+  background: var(--surface);
+  color: var(--text-primary);
+  border-color: var(--border);
+
+  &:hover:not(:disabled) {
+    background: var(--surface-soft);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+}
+
+// ============================================================
+// VARIANT: OUTLINE
+// ============================================================
+
+.tech-btn--outline {
+  background: transparent;
+  color: var(--primary);
+  border-color: var(--primary);
+
+  &:hover:not(:disabled) {
+    background: var(--primary-muted);
+    box-shadow: 0 0 15px var(--glow-primary-sm);
+  }
+}
+
+// ============================================================
+// VARIANT: GHOST
+// ============================================================
+
+.tech-btn--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+
+  &:hover:not(:disabled) {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+  }
+}
+
+// ============================================================
+// VARIANT: LINK
+// ============================================================
+
+.tech-btn--link {
+  background: transparent;
+  color: var(--primary);
+  border-color: transparent;
+  padding-inline: 0;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+
+  &:hover:not(:disabled) {
+    color: var(--primary-light);
+  }
+}
+
+// ============================================================
+// VARIANT: GLOW
+// ============================================================
+
+.tech-btn--glow {
+  background: var(--surface);
+  color: var(--text-primary);
+  border-color: var(--border-accent);
+  box-shadow: 0 0 15px var(--glow-primary-sm);
+
+  &:hover:not(:disabled) {
+    border-color: var(--primary);
+    box-shadow: 0 0 25px var(--glow-primary-md);
+    transform: translateY(-2px);
+  }
+}
+
+// ============================================================
+// FULL WIDTH
+// ============================================================
+
+.tech-btn--full {
+  width: 100%;
+}
+
+// ============================================================
+// BORDER BEAM ANIMATIONS
+// ============================================================
+
+.border-beam-cw {
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    background-size: 50% 100%;
+    animation: borderBeamCW 3s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+@keyframes borderBeamCW {
+  0% {
+    transform: translateX(-100%) translateY(0);
+    opacity: 0;
+  }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% {
+    transform: translateX(100%) translateY(100%);
+    opacity: 0;
+  }
+}
+
+// ============================================================
+// LOADING STATE
+// ============================================================
+
+.tech-btn--loading {
+  cursor: wait;
+  pointer-events: none;
+}

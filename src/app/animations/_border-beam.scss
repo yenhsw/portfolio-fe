@@ -1,0 +1,466 @@
+// ============================================================
+// BORDER BEAM ANIMATION ENGINE
+// Cyber technology border beam effects
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+// ============================================================
+// BORDER BEAM BASE
+// ============================================================
+
+.border-beam {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+}
+
+// ============================================================
+// BORDER BEAM ANIMATION - Clockwise
+// ============================================================
+
+.border-beam-cw {
+  @extend .border-beam;
+
+  &::before {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--primary),
+      transparent
+    );
+    animation: borderBeamCW 3s linear infinite;
+    background-size: 50% 100%;
+  }
+}
+
+@keyframes borderBeamCW {
+  0% {
+    transform: translateX(-100%) translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%) translateY(100%);
+    opacity: 0;
+  }
+}
+
+// ============================================================
+// BORDER BEAM ANIMATION - Counter Clockwise
+// ============================================================
+
+.border-beam-ccw {
+  @extend .border-beam;
+
+  &::before {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--secondary),
+      transparent
+    );
+    animation: borderBeamCCW 4s linear infinite;
+    background-size: 50% 100%;
+  }
+}
+
+@keyframes borderBeamCCW {
+  0% {
+    transform: translateX(100%) translateY(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100%) translateY(100%);
+    opacity: 0;
+  }
+}
+
+// ============================================================
+// BORDER BEAM - CONTOUR (Full border run)
+// ============================================================
+
+.border-beam-contour {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--primary) 20%,
+      var(--secondary) 50%,
+      var(--accent) 80%,
+      transparent 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: borderContour 4s linear infinite;
+    background-size: 200% 100%;
+  }
+}
+
+@keyframes borderContour {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// ============================================================
+// BORDER BEAM - GLOW PULSE
+// ============================================================
+
+.border-beam-pulse {
+  @extend .border-beam;
+  border: 1px solid var(--border-accent);
+  transition: all var(--transition-base);
+
+  &::before {
+    background: transparent;
+    animation: none;
+    border-radius: inherit;
+  }
+
+  &:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 20px var(--glow-primary-sm), inset 0 0 20px var(--primary-muted);
+    
+    &::before {
+      background: linear-gradient(
+        90deg,
+        transparent,
+        var(--primary),
+        transparent
+      );
+      background-size: 50% 100%;
+      animation: borderBeamCW 2s linear infinite;
+    }
+  }
+}
+
+// ============================================================
+// BORDER BEAM - SEQUENTIAL (For button groups)
+// ============================================================
+
+.border-beam-sequential {
+  @extend .border-beam;
+
+  &::before {
+    background: linear-gradient(
+      90deg,
+      var(--primary),
+      var(--secondary),
+      var(--accent)
+    );
+    animation: borderSequential 6s linear infinite;
+    background-size: 200% 100%;
+  }
+}
+
+@keyframes borderSequential {
+  0% {
+    transform: translateX(-50%) translateY(-50%) rotate(0deg);
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  25% {
+    transform: translateX(50%) translateY(-50%) rotate(90deg);
+  }
+  50% {
+    transform: translateX(50%) translateY(50%) rotate(180deg);
+  }
+  75% {
+    transform: translateX(-50%) translateY(50%) rotate(270deg);
+  }
+  95% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-50%) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+// ============================================================
+// BORDER BEAM - ADVANCED (Corner to corner)
+// ============================================================
+
+.border-beam-advanced {
+  position: relative;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  &::before {
+    top: 0;
+    left: 0;
+    border-top: 2px solid var(--primary);
+    border-left: 2px solid var(--primary);
+    animation: borderTopLeft 3s ease-in-out infinite;
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  &::after {
+    bottom: 0;
+    right: 0;
+    border-bottom: 2px solid var(--secondary);
+    border-right: 2px solid var(--secondary);
+    animation: borderBottomRight 3s ease-in-out infinite;
+    transform: scaleX(0);
+    transform-origin: right;
+  }
+}
+
+@keyframes borderTopLeft {
+  0%, 100% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  10%, 60% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes borderBottomRight {
+  0%, 100% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  40%, 90% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+// ============================================================
+// BORDER BEAM - CORNER BEAMS
+// ============================================================
+
+.border-beam-corner {
+  position: relative;
+
+  .corner-tl,
+  .corner-tr,
+  .corner-bl,
+  .corner-br {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      background: var(--primary);
+    }
+
+    &::before {
+      width: 100%;
+      height: 2px;
+    }
+
+    &::after {
+      width: 2px;
+      height: 100%;
+    }
+  }
+
+  .corner-tl {
+    top: 0;
+    left: 0;
+    &::before { top: 0; left: 0; }
+    &::after { top: 0; left: 0; }
+    animation: cornerPulseTL 2s ease-in-out infinite;
+  }
+
+  .corner-tr {
+    top: 0;
+    right: 0;
+    &::before { top: 0; right: 0; }
+    &::after { top: 0; right: 0; }
+    animation: cornerPulseTR 2s ease-in-out infinite 0.5s;
+  }
+
+  .corner-bl {
+    bottom: 0;
+    left: 0;
+    &::before { bottom: 0; left: 0; }
+    &::after { bottom: 0; left: 0; }
+    animation: cornerPulseBL 2s ease-in-out infinite 1s;
+  }
+
+  .corner-br {
+    bottom: 0;
+    right: 0;
+    &::before { bottom: 0; right: 0; }
+    &::after { bottom: 0; right: 0; }
+    animation: cornerPulseBR 2s ease-in-out infinite 1.5s;
+  }
+}
+
+@keyframes cornerPulseTL {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; box-shadow: 0 0 10px var(--glow-primary); }
+}
+
+@keyframes cornerPulseTR {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; box-shadow: 0 0 10px var(--glow-primary); }
+}
+
+@keyframes cornerPulseBL {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; box-shadow: 0 0 10px var(--glow-primary); }
+}
+
+@keyframes cornerPulseBR {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; box-shadow: 0 0 10px var(--glow-primary); }
+}
+
+// ============================================================
+// BORDER BEAM - RUNNING LIGHT
+// ============================================================
+
+.border-beam-running {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      var(--primary) 30deg,
+      transparent 60deg,
+      transparent 360deg
+    );
+    padding: 2px;
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: borderRunning 4s linear infinite;
+  }
+}
+
+@keyframes borderRunning {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ============================================================
+// BORDER BEAM - DIAGONAL SWEEP
+// ============================================================
+
+.border-beam-diagonal {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(0, 245, 255, 0.3),
+      transparent
+    );
+    animation: diagonalSweep 3s ease-in-out infinite;
+    transform: skewX(-20deg);
+  }
+}
+
+@keyframes diagonalSweep {
+  0% {
+    left: -100%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    left: 200%;
+    opacity: 0;
+  }
+}
+
+// ============================================================
+// UTILITY CLASSES
+// ============================================================
+
+.border-glow {
+  border: 1px solid var(--border-accent);
+  box-shadow: 0 0 15px var(--glow-primary-sm);
+}
+
+.border-glow-hover {
+  transition: all var(--transition-base);
+
+  &:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 20px var(--glow-primary-md);
+  }
+}

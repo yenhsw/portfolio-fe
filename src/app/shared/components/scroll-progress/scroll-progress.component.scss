@@ -1,0 +1,20 @@
+// ============================================================
+// SCROLL PROGRESS STYLES
+// ============================================================
+
+.scroll-progress-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  z-index: 9999;
+}
+
+.scroll-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  box-shadow: 0 0 10px var(--glow-primary);
+  transition: width 0.1s ease-out;
+}

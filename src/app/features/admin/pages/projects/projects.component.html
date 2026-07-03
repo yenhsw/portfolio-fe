@@ -1,0 +1,396 @@
+<app-admin-page
+  title="Projects Management"
+  subtitle="Manage your portfolio projects and showcase"
+  [icon]="pageIcon"
+>
+  <!-- Toolbar -->
+  <div class="toolbar" [class.visible]="isReady()">
+    <div class="toolbar-left">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" class="search-input" placeholder="Search projects..."
+          [value]="store.searchQuery()" (input)="onSearch($event)" />
+      </div>
+      <select class="filter-select" [value]="store.filterCategory()" (change)="onCategoryFilter($event)">
+        <option value="">All Categories</option>
+        @for (cat of categories; track cat.id) {
+          <option [value]="cat.id">{{ cat.name }}</option>
+        }
+      </select>
+      <select class="filter-select" [value]="store.filterStatus()" (change)="onStatusFilter($event)">
+        <option value="">All Status</option>
+        @for (status of statuses; track status.value) {
+          <option [value]="status.value">{{ status.label }}</option>
+        }
+      </select>
+    </div>
+    <div class="toolbar-right">
+      @if (store.hasSelectedItems()) {
+        <div class="bulk-actions">
+          <span class="selected-count">{{ store.selectedCount() }} selected</span>
+          <button class="bulk-btn" (click)="bulkPublish()">Publish</button>
+          <button class="bulk-btn" (click)="bulkUnpublish()">Unpublish</button>
+          <button class="bulk-btn danger" (click)="bulkDelete()">Delete</button>
+        </div>
+      }
+      <div class="view-toggle">
+        <button class="toggle-btn" [class.active]="viewMode() === 'featured'" (click)="viewMode.set('featured')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </button>
+        <button class="toggle-btn" [class.active]="viewMode() === 'all'" (click)="viewMode.set('all')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+        </button>
+      </div>
+      <app-admin-button variant="secondary" (click)="exportProjects()">Export</app-admin-button>
+      <app-admin-button variant="secondary" (click)="importProjects()">Import</app-admin-button>
+      <app-admin-button variant="primary" (click)="openAddDialog()">Add Project</app-admin-button>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="projects-layout" [class.visible]="isReady()">
+    <div class="projects-main-section">
+      @if (viewMode() === 'featured') {
+        <div class="featured-section">
+          <div class="section-header">
+            <h3 class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              Featured Projects
+            </h3>
+            <span class="section-count">{{ store.featuredProjects().length }} projects</span>
+          </div>
+          <div class="featured-grid">
+            @for (proj of store.featuredProjects(); track proj.id) {
+              <div class="featured-card" [class.selected]="selectedProject()?.id === proj.id" (click)="openViewDialog(proj)">
+                <div class="card-image">
+                  <img [src]="proj.thumbnail" [alt]="proj.name" />
+                  @if (proj.isFeatured) {
+                    <span class="featured-badge">
+                      <svg viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                      </svg>
+                    </span>
+                  }
+                  <div class="card-overlay">
+                    <button class="overlay-btn" (click)="selectAndEdit(proj); $event.stopPropagation()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button class="overlay-btn danger" (click)="deleteProject(proj.id); $event.stopPropagation()">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="card-content">
+                  <div class="card-meta">
+                    <span class="status-badge" [style.--status-color]="getStatusColor(proj.status)">{{ getStatusLabel(proj.status) }}</span>
+                    <span class="category-badge">{{ getCategoryName(proj.categoryId) }}</span>
+                  </div>
+                  <h4 class="card-title">{{ proj.name }}</h4>
+                  <p class="card-description">{{ proj.shortDescription }}</p>
+                  <div class="card-tech">
+                    @for (tech of proj.technologies.slice(0, 4); track tech) {
+                      <span class="tech-badge">{{ tech }}</span>
+                    }
+                    @if (proj.technologies.length > 4) {
+                      <span class="tech-more">+{{ proj.technologies.length - 4 }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+            @if (store.featuredProjects().length === 0) {
+              <div class="empty-featured">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                <p>No featured projects yet</p>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <app-admin-table [columns]="tableColumns" [data]="projectsForTable()" [loading]="store.loading()"
+          [selectable]="true" [selectedIds]="store.selectedIds()" [showPagination]="true"
+          (rowSelect)="onRowSelect($event)" (actionClick)="onAction($event)" (sortChange)="onSort($event)" />
+      }
+    </div>
+
+    <!-- Preview -->
+    <div class="projects-preview-section">
+      <div class="preview-header">
+        <h3 class="preview-title">Live Preview</h3>
+        <span class="preview-badge">Real-time</span>
+      </div>
+      @if (selectedProject()) {
+        <div class="preview-card">
+          <div class="preview-image">
+            <img [src]="selectedProject()!.thumbnail" [alt]="selectedProject()!.name" />
+          </div>
+          <div class="preview-content">
+            <div class="preview-meta">
+              <span class="status-badge" [style.--status-color]="getStatusColor(selectedProject()!.status)">
+                {{ getStatusLabel(selectedProject()!.status) }}
+              </span>
+            </div>
+            <h4 class="preview-title-text">{{ selectedProject()!.name }}</h4>
+            <p class="preview-role">{{ selectedProject()!.role }}</p>
+            <p class="preview-description">{{ selectedProject()!.shortDescription }}</p>
+            <div class="preview-tech">
+              @for (tech of selectedProject()!.technologies.slice(0, 6); track tech) {
+                <span class="tech-badge">{{ tech }}</span>
+              }
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="preview-empty">
+          <p>Select a project to preview</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Dialog -->
+  @if (dialogMode()) {
+    <div class="dialog-overlay" (click)="closeDialog()">
+      <div class="dialog dialog-xl" (click)="$event.stopPropagation()">
+        <div class="dialog-header">
+          <h3 class="dialog-title">{{ getDialogTitle() }}</h3>
+          <button class="dialog-close" (click)="closeDialog()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="dialog-body">
+          @if (dialogMode() === 'view' && selectedProject()) {
+            <div class="view-mode">
+              <div class="view-hero">
+                <img [src]="selectedProject()!.banner || selectedProject()!.thumbnail" [alt]="selectedProject()!.name" class="view-banner" />
+                <div class="view-hero-content">
+                  <div class="view-meta">
+                    <span class="status-badge" [style.--status-color]="getStatusColor(selectedProject()!.status)">
+                      {{ getStatusLabel(selectedProject()!.status) }}
+                    </span>
+                  </div>
+                  <h2 class="view-title">{{ selectedProject()!.name }}</h2>
+                  <p class="view-role">{{ selectedProject()!.role }}</p>
+                </div>
+              </div>
+              <div class="view-sections">
+                <div class="view-section">
+                  <h5>Description</h5>
+                  <div class="view-description" [innerHTML]="selectedProject()!.fullDescription"></div>
+                </div>
+                @if (selectedProject()!.technologies.length > 0) {
+                  <div class="view-section">
+                    <h5>Technologies</h5>
+                    <div class="view-tech">
+                      @for (tech of selectedProject()!.technologies; track tech) {
+                        <span class="tech-badge">{{ tech }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+                @if (selectedProject()!.features.length > 0) {
+                  <div class="view-section">
+                    <h5>Features</h5>
+                    <ul class="view-features">
+                      @for (feat of selectedProject()!.features; track feat.id) {
+                        <li>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                          {{ feat.name }}
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
+                @if (selectedProject()!.gallery.length > 0) {
+                  <div class="view-section">
+                    <h5>Gallery</h5>
+                    <div class="view-gallery">
+                      @for (img of selectedProject()!.gallery; track img) {
+                        <img [src]="img" alt="Gallery" />
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="form-tabs">
+              <button class="tab-btn" [class.active]="activeTab() === 'basic'" (click)="activeTab.set('basic')">Basic</button>
+              <button class="tab-btn" [class.active]="activeTab() === 'media'" (click)="activeTab.set('media')">Media</button>
+              <button class="tab-btn" [class.active]="activeTab() === 'tech'" (click)="activeTab.set('tech')">Tech</button>
+              <button class="tab-btn" [class.active]="activeTab() === 'seo'" (click)="activeTab.set('seo')">SEO</button>
+            </div>
+            <div class="form-content">
+              @if (activeTab() === 'basic') {
+                <section class="form-section">
+                  <h4 class="section-title">Basic Information</h4>
+                  <div class="form-grid">
+                    <div class="form-field span-2">
+                      <label class="field-label">Project Name <span class="required">*</span></label>
+                      <input type="text" class="field-input" [(ngModel)]="formData.name" placeholder="My Project" />
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">Slug</label>
+                      <input type="text" class="field-input" [(ngModel)]="formData.slug" placeholder="my-project" />
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">Client</label>
+                      <input type="text" class="field-input" [(ngModel)]="formData.client" placeholder="Company" />
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">Role <span class="required">*</span></label>
+                      <input type="text" class="field-input" [(ngModel)]="formData.role" placeholder="Developer" />
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">Category</label>
+                      <select class="field-input" [(ngModel)]="formData.categoryId">
+                        @for (cat of categories; track cat.id) {
+                          <option [value]="cat.id">{{ cat.name }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">Status</label>
+                      <select class="field-input" [(ngModel)]="formData.status">
+                        @for (s of statuses; track s.value) {
+                          <option [value]="s.value">{{ s.label }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">
+                        <input type="checkbox" [(ngModel)]="formData.isFeatured" /> Featured
+                      </label>
+                    </div>
+                  </div>
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label class="field-label">Start Date</label>
+                      <input type="month" class="field-input" [(ngModel)]="formData.startDate" />
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">End Date</label>
+                      <input type="month" class="field-input" [(ngModel)]="formData.endDate" />
+                    </div>
+                  </div>
+                  <div class="form-field">
+                    <label class="field-label">Short Description <span class="required">*</span></label>
+                    <textarea class="field-textarea" [(ngModel)]="formData.shortDescription" rows="2" placeholder="Brief description..."></textarea>
+                  </div>
+                </section>
+              }
+              @if (activeTab() === 'media') {
+                <section class="form-section">
+                  <h4 class="section-title">Media</h4>
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label class="field-label">Thumbnail URL</label>
+                      <input type="url" class="field-input" [(ngModel)]="formData.thumbnail" placeholder="https://..." />
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">Banner URL</label>
+                      <input type="url" class="field-input" [(ngModel)]="formData.banner" placeholder="https://..." />
+                    </div>
+                  </div>
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label class="field-label">GitHub URL</label>
+                      <input type="url" class="field-input" [(ngModel)]="formData.githubUrl" placeholder="https://github.com/..." />
+                    </div>
+                    <div class="form-field">
+                      <label class="field-label">Demo URL</label>
+                      <input type="url" class="field-input" [(ngModel)]="formData.demoUrl" placeholder="https://..." />
+                    </div>
+                  </div>
+                </section>
+              }
+              @if (activeTab() === 'tech') {
+                <section class="form-section">
+                  <h4 class="section-title">Technologies</h4>
+                  <div class="tech-grid">
+                    @for (tech of availableTechnologies; track tech) {
+                      <label class="tech-checkbox">
+                        <input type="checkbox" [checked]="isTechSelected(tech)" (change)="toggleTech(tech)" />
+                        <span>{{ tech }}</span>
+                      </label>
+                    }
+                  </div>
+                </section>
+                <section class="form-section">
+                  <h4 class="section-title">Features</h4>
+                  <div class="features-list">
+                    @for (feat of formData.features; track feat.id; let i = $index) {
+                      <div class="feature-row">
+                        <input type="text" class="field-input" [(ngModel)]="feat.name" placeholder="Feature name" />
+                        <button class="btn-icon danger" (click)="removeFeature(i)">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                          </svg>
+                        </button>
+                      </div>
+                    }
+                    <button class="btn-add" (click)="addFeature()">+ Add Feature</button>
+                  </div>
+                </section>
+              }
+              @if (activeTab() === 'seo') {
+                <section class="form-section">
+                  <h4 class="section-title">SEO</h4>
+                  <div class="form-field">
+                    <label class="field-label">Meta Title</label>
+                    <input type="text" class="field-input" [(ngModel)]="formData.seo.metaTitle" placeholder="SEO Title" />
+                  </div>
+                  <div class="form-field">
+                    <label class="field-label">Meta Description</label>
+                    <textarea class="field-textarea" [(ngModel)]="formData.seo.metaDescription" rows="3" placeholder="Meta description..."></textarea>
+                  </div>
+                  <div class="form-field">
+                    <label class="field-label">Keywords (comma separated)</label>
+                    <input type="text" class="field-input" [ngModel]="formData.seo.keywords.join(', ')" (ngModelChange)="updateKeywords($event)" placeholder="kw1, kw2" />
+                  </div>
+                </section>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="dialog-footer">
+          @if (dialogMode() === 'view') {
+            <app-admin-button variant="secondary" (click)="closeDialog()">Close</app-admin-button>
+            <app-admin-button variant="primary" (click)="openEditFromView()">Edit</app-admin-button>
+          } @else {
+            <app-admin-button variant="secondary" (click)="closeDialog()">Cancel</app-admin-button>
+            @if (dialogMode() === 'edit') {
+              <app-admin-button variant="danger" (click)="deleteCurrentProject()">Delete</app-admin-button>
+            }
+            <app-admin-button variant="primary" (click)="saveProject()" [loading]="store.saving()">
+              {{ dialogMode() === 'add' ? 'Create' : 'Save' }}
+            </app-admin-button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</app-admin-page>

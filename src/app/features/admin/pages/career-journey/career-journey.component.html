@@ -1,0 +1,234 @@
+<app-admin-page
+  [title]="'admin.pages.careerJourney.title' | t"
+  [subtitle]="'admin.pages.careerJourney.subtitle' | t"
+  [icon]="pageIcon"
+>
+  <div class="cj-type-bar" [class.visible]="isReady()">
+    <div class="type-info">
+      <span class="type-label">{{ 'admin.pages.careerJourney.sectionType' | t }}</span>
+      <span class="type-badge">{{ sectionType }}</span>
+      <span class="type-name">{{ sectionTypeLabel }}</span>
+    </div>
+    <p class="type-hint">{{ 'admin.pages.careerJourney.sectionTypeHint' | t }}</p>
+  </div>
+
+  <div class="cj-tabs" [class.visible]="isReady()">
+    @for (tab of tabList(); track tab.key) {
+      <button class="cj-tab" [class.active]="activeTab() === tab.key" (click)="setTab(tab.key)">
+        <span class="tab-label">{{ tab.label }}</span>
+        <span class="tab-desc">{{ tab.description }}</span>
+      </button>
+    }
+  </div>
+
+  <div class="cj-content" [class.visible]="isReady()">
+    @if (activeTab() === 'section') {
+      <div class="panel">
+        <div class="panel-header">
+          <h3>{{ 'admin.pages.careerJourney.sectionPanel' | t }}</h3>
+          <app-admin-button variant="primary" (click)="saveSection()">{{ 'admin.common.saveConfig' | t }}</app-admin-button>
+        </div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>{{ 'admin.pages.careerJourney.sectionType' | t }}</label>
+            <input type="text" class="field-input field-readonly" [value]="sectionType" readonly />
+          </div>
+          <div class="form-field">
+            <label>{{ 'admin.common.sectionTag' | t }}</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.sectionTag" placeholder="My Story" />
+          </div>
+          <div class="form-field">
+            <label>{{ 'admin.common.headingAccent' | t }}</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.titleAccent" placeholder="CAREER" />
+          </div>
+          <div class="form-field">
+            <label>{{ 'admin.common.headingText' | t }}</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.titleText" placeholder="JOURNEY" />
+          </div>
+          <div class="form-field full">
+            <label>{{ 'admin.common.sectionDescription' | t }}</label>
+            <textarea class="field-textarea" rows="2" [(ngModel)]="sectionForm.subtitle"></textarea>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'experiences') {
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>{{ 'admin.pages.careerJourney.experiencesPanel' | t }}</h3>
+            <p class="panel-desc">{{ 'admin.pages.careerJourney.experiencesDesc' | t }}</p>
+          </div>
+          <app-admin-button variant="primary" (click)="openAdd()">{{ 'admin.pages.careerJourney.addExperience' | t }}</app-admin-button>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'admin.common.icon' | t }}</th>
+                <th>{{ 'admin.common.jobTitleCol' | t }}</th>
+                <th>{{ 'admin.common.companyCol' | t }}</th>
+                <th>{{ 'admin.common.periodCol' | t }}</th>
+                <th>{{ 'admin.common.locationCol' | t }}</th>
+                <th>{{ 'admin.common.order' | t }}</th>
+                <th>{{ 'admin.common.status' | t }}</th>
+                <th>{{ 'admin.common.actions' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.sortedExperiences(); track item.id) {
+                <tr [class.inactive-row]="!item.isActive">
+                  <td><span class="cell-icon">{{ item.positionIcon }}</span></td>
+                  <td>{{ item.position }}</td>
+                  <td>{{ item.company }}</td>
+                  <td>{{ item.period }}</td>
+                  <td>{{ item.location }}</td>
+                  <td>{{ item.sortOrder }}</td>
+                  <td>
+                    <label class="status-switch" [class.inactive]="!item.isActive">
+                      <input type="checkbox" [checked]="item.isActive" (change)="setStatus(item.id, $any($event.target).checked)" />
+                      <span class="switch-track"><span class="switch-thumb"></span></span>
+                      <span class="switch-text">{{ item.isActive ? ('admin.common.active' | t) : ('admin.common.inactive' | t) }}</span>
+                    </label>
+                  </td>
+                  <td class="actions">
+                    <button class="action-btn" (click)="openEdit(item.id)">{{ 'admin.common.edit' | t }}</button>
+                    <button class="action-btn danger" (click)="deleteItem(item.id)">{{ 'admin.common.delete' | t }}</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </div>
+
+  <app-admin-confirm-dialog
+    [isOpen]="confirmOpen()"
+    [config]="confirmConfig()"
+    (confirmed)="onConfirmDelete()"
+    (cancelled)="closeConfirm()"
+  />
+
+  <app-admin-dialog
+    [isOpen]="dialogMode() !== null"
+    [hasCustomFooter]="true"
+    [config]="formDialogConfig()"
+    (closed)="closeDialog()"
+  >
+    <div class="form-dialog">
+      <div class="form-grid">
+        <div class="form-field icon-field">
+          <label>{{ 'admin.common.jobTitleIcon' | t }}</label>
+          <div class="icon-input-row">
+            <span class="icon-preview">{{ experienceForm.positionIcon || '💼' }}</span>
+            <input type="text" class="field-input" [(ngModel)]="experienceForm.positionIcon" placeholder="💻" />
+          </div>
+        </div>
+        <div class="form-field">
+          <label>{{ 'admin.common.displayOrder' | t }}</label>
+          <input type="number" class="field-input" [(ngModel)]="experienceForm.sortOrder" min="1" />
+        </div>
+        <div class="form-field full">
+          <label>{{ 'admin.common.jobTitle' | t }} <span class="req">*</span></label>
+          <input type="text" class="field-input" [(ngModel)]="experienceForm.position" placeholder="Software Engineer" />
+        </div>
+        <div class="form-field">
+          <label>{{ 'admin.common.company' | t }} <span class="req">*</span></label>
+          <input type="text" class="field-input" [(ngModel)]="experienceForm.company" />
+        </div>
+        <div class="form-field">
+          <label>{{ 'admin.common.period' | t }}</label>
+          <input type="text" class="field-input" [(ngModel)]="experienceForm.period" placeholder="2025 - Present" />
+        </div>
+        <div class="form-field full">
+          <label>{{ 'admin.common.location' | t }}</label>
+          <input type="text" class="field-input" [(ngModel)]="experienceForm.location" />
+        </div>
+        <div class="form-field full">
+          <label>{{ 'admin.common.shortDescription' | t }}</label>
+          <textarea class="field-textarea" rows="3" [(ngModel)]="experienceForm.description"></textarea>
+        </div>
+      </div>
+
+      <div class="nested-section">
+        <div class="section-label"><span>{{ 'admin.common.technologies' | t }}</span></div>
+        <div class="nested-add-row">
+          <input type="text" class="field-input" [(ngModel)]="newTechName" placeholder="Angular, Java..." (keyup.enter)="addTechnology()" />
+          <app-admin-button variant="secondary" (click)="addTechnology()">+ {{ 'admin.common.add' | t }}</app-admin-button>
+        </div>
+        @if (experienceForm.technologies.length > 0) {
+          <div class="chip-list">
+            @for (tech of experienceForm.technologies; track tech.name; let i = $index) {
+              <span class="chip">{{ tech.name }}<button type="button" class="chip-remove" (click)="removeTechnology(i)">×</button></span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="nested-section">
+        <div class="section-label"><span>{{ 'admin.common.responsibilities' | t }}</span></div>
+        <div class="nested-add-row">
+          <input type="text" class="field-input" [(ngModel)]="newRespText" placeholder="Develop RESTful API..." (keyup.enter)="addResponsibility()" />
+          <app-admin-button variant="secondary" (click)="addResponsibility()">+ {{ 'admin.common.add' | t }}</app-admin-button>
+        </div>
+        @if (experienceForm.responsibilities.length > 0) {
+          <ul class="nested-list">
+            @for (resp of experienceForm.responsibilities; track resp.text; let i = $index) {
+              <li>{{ resp.text }}<button type="button" class="list-remove" (click)="removeResponsibility(i)">×</button></li>
+            }
+          </ul>
+        }
+      </div>
+
+      <div class="nested-section">
+        <div class="section-label"><span>{{ 'admin.common.featuredProjects' | t }}</span></div>
+        <div class="nested-add-row triple">
+          <input type="text" class="field-input" [(ngModel)]="newProjectIcon" placeholder="🏥" />
+          <input type="text" class="field-input" [(ngModel)]="newProjectName" placeholder="Project name" (keyup.enter)="addProject()" />
+          <app-admin-button variant="secondary" (click)="addProject()">+ {{ 'admin.common.add' | t }}</app-admin-button>
+        </div>
+        @if (experienceForm.projects.length > 0) {
+          <div class="chip-list">
+            @for (proj of experienceForm.projects; track proj.name; let i = $index) {
+              <span class="chip">{{ proj.icon }} {{ proj.name }}<button type="button" class="chip-remove" (click)="removeProject(i)">×</button></span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="nested-section">
+        <div class="section-label"><span>{{ 'admin.common.achievements' | t }}</span></div>
+        <div class="nested-add-row quad">
+          <input type="number" class="field-input" [(ngModel)]="newAchValue" min="0" placeholder="50" />
+          <input type="text" class="field-input" [(ngModel)]="newAchSuffix" placeholder="+" />
+          <input type="text" class="field-input" [(ngModel)]="newAchLabel" placeholder="REST APIs" (keyup.enter)="addAchievement()" />
+          <app-admin-button variant="secondary" (click)="addAchievement()">+ {{ 'admin.common.add' | t }}</app-admin-button>
+        </div>
+        @if (experienceForm.achievements.length > 0) {
+          <div class="chip-list">
+            @for (ach of experienceForm.achievements; track ach.label; let i = $index) {
+              <span class="chip accent">{{ ach.value }}{{ ach.suffix }} {{ ach.label }}<button type="button" class="chip-remove" (click)="removeAchievement(i)">×</button></span>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <ng-container slot="footer">
+      <div class="form-dialog-footer">
+        <label class="status-switch dialog-status" [class.inactive]="!formIsActive">
+          <input type="checkbox" [(ngModel)]="formIsActive" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+          <span class="switch-text">{{ formIsActive ? ('admin.common.activeVisible' | t) : ('admin.common.inactiveHidden' | t) }}</span>
+        </label>
+        <div class="dialog-actions">
+          <app-admin-button variant="secondary" (click)="closeDialog()">{{ 'admin.common.cancel' | t }}</app-admin-button>
+          <app-admin-button variant="primary" (click)="saveDialog()">{{ 'admin.common.save' | t }}</app-admin-button>
+        </div>
+      </div>
+    </ng-container>
+  </app-admin-dialog>
+</app-admin-page>

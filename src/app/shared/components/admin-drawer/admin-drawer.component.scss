@@ -1,0 +1,144 @@
+// ============================================================
+// ADMIN DRAWER STYLES
+// Slide-in Panel for Forms and Details
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+// ============================================================
+// OVERLAY
+// ============================================================
+
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// ============================================================
+// CONTAINER
+// ============================================================
+
+.drawer-container {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 15, 26, 0.98);
+  border-left: 1px solid var(--border);
+  box-shadow: -25px 0 50px rgba(0, 0, 0, 0.5);
+
+  &.position-right {
+    right: 0;
+    animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &.position-left {
+    left: 0;
+    border-left: none;
+    border-right: 1px solid var(--border);
+    box-shadow: 25px 0 50px rgba(0, 0, 0, 0.5);
+    animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// ============================================================
+// HEADER
+// ============================================================
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.drawer-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.drawer-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    color: var(--error);
+    background: rgba(239, 68, 68, 0.1);
+  }
+}
+
+// ============================================================
+// CONTENT
+// ============================================================
+
+.drawer-content {
+  flex: 1;
+  padding: var(--space-6);
+  overflow-y: auto;
+}
+
+// ============================================================
+// FOOTER
+// ============================================================
+
+.drawer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}

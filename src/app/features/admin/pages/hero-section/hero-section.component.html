@@ -1,0 +1,317 @@
+<app-admin-page
+  [title]="'admin.pages.hero.title' | t"
+  [subtitle]="'admin.pages.hero.subtitle' | t"
+  [icon]="pageIcon"
+>
+  <div class="hs-type-bar" [class.visible]="isReady()">
+    <div class="type-info">
+      <span class="type-label">{{ 'admin.pages.hero.sectionType' | t }}</span>
+      <span class="type-badge">{{ sectionType }}</span>
+      <span class="type-name">{{ sectionTypeLabel }}</span>
+    </div>
+    <p class="type-hint">{{ 'admin.pages.hero.sectionTypeHint' | t }}</p>
+  </div>
+
+  <div class="hs-tabs" [class.visible]="isReady()">
+    @for (tab of tabList(); track tab.key) {
+      <button class="hs-tab" [class.active]="activeTab() === tab.key" (click)="setTab(tab.key)">
+        <span class="tab-label">{{ tab.label }}</span>
+        <span class="tab-desc">{{ tab.description }}</span>
+      </button>
+    }
+  </div>
+
+  <div class="hs-content" [class.visible]="isReady()">
+    @if (activeTab() === 'section') {
+      <div class="panel">
+        <div class="panel-header">
+          <h3>{{ 'admin.pages.hero.sectionPanel' | t }}</h3>
+          <app-admin-button variant="primary" (click)="saveSection()">{{ 'admin.common.saveConfig' | t }}</app-admin-button>
+        </div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>{{ 'admin.pages.hero.sectionType' | t }}</label>
+            <input type="text" class="field-input field-readonly" [value]="sectionType" readonly />
+          </div>
+          <div class="form-field">
+            <label>{{ 'admin.pages.hero.greeting' | t }}</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.greeting" placeholder="Xin chào, tôi là" />
+          </div>
+          <div class="form-field">
+            <label>Prefix typing</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.typingPrefix" placeholder="| " />
+          </div>
+          <div class="form-field">
+            <label>Name (regular)</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.nameText" placeholder="HOANG SY " />
+          </div>
+          <div class="form-field">
+            <label>Name (accent / highlight)</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.nameAccent" placeholder="YEN" />
+          </div>
+          <div class="form-field full">
+            <label>Description</label>
+            <textarea class="field-textarea" rows="4" [(ngModel)]="sectionForm.description"></textarea>
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <h4>Avatar</h4>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Image URL</label>
+              <input type="text" class="field-input" [(ngModel)]="avatarForm.imageUrl" placeholder="/assets/images/avatar.jpg" />
+            </div>
+            <div class="form-field">
+              <label>Alt text</label>
+              <input type="text" class="field-input" [(ngModel)]="avatarForm.alt" placeholder="Hoang Sy Yen" />
+            </div>
+            <div class="form-field">
+              <label>Fallback initials</label>
+              <input type="text" class="field-input" [(ngModel)]="avatarForm.fallbackInitials" placeholder="YHS" maxlength="4" />
+            </div>
+            <div class="form-field">
+              <label>Show avatar</label>
+              <label class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="avatarForm.isActive" />
+                <span>Active on Home</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'typing') {
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Typing effect</h3>
+            <p class="panel-desc">Rotating typed text lines. Only Active items are used in the animation.</p>
+          </div>
+          <app-admin-button variant="primary" (click)="openAdd('typing')">+ Add line</app-admin-button>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Content</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.sortedTypingLines(); track item.id) {
+                <tr [class.inactive-row]="!item.isActive">
+                  <td>{{ item.text }}</td>
+                  <td>{{ item.sortOrder }}</td>
+                  <td>
+                    <label class="status-switch" [class.inactive]="!item.isActive">
+                      <input type="checkbox" [checked]="item.isActive" (change)="setStatus('typing', item.id, $any($event.target).checked)" />
+                      <span class="switch-track"><span class="switch-thumb"></span></span>
+                      <span class="switch-text">{{ item.isActive ? 'Active' : 'Inactive' }}</span>
+                    </label>
+                  </td>
+                  <td class="actions">
+                    <button class="action-btn" (click)="openEdit('typing', item.id)">Edit</button>
+                    <button class="action-btn danger" (click)="deleteItem('typing', item.id)">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'social') {
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Social badges</h3>
+            <p class="panel-desc">Icon + link with snake border animation. Only Active items appear on the site.</p>
+          </div>
+          <app-admin-button variant="primary" (click)="openAdd('social')">+ Add social</app-admin-button>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Icon URL</th>
+                <th>URL</th>
+                <th>Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.sortedSocialLinks(); track item.id) {
+                <tr [class.inactive-row]="!item.isActive">
+                  <td>{{ item.name }}</td>
+                  <td class="link-cell">{{ item.icon }}</td>
+                  <td class="link-cell">{{ item.url }}</td>
+                  <td>{{ item.sortOrder }}</td>
+                  <td>
+                    <label class="status-switch" [class.inactive]="!item.isActive">
+                      <input type="checkbox" [checked]="item.isActive" (change)="setStatus('social', item.id, $any($event.target).checked)" />
+                      <span class="switch-track"><span class="switch-thumb"></span></span>
+                      <span class="switch-text">{{ item.isActive ? 'Active' : 'Inactive' }}</span>
+                    </label>
+                  </td>
+                  <td class="actions">
+                    <button class="action-btn" (click)="openEdit('social', item.id)">Edit</button>
+                    <button class="action-btn danger" (click)="deleteItem('social', item.id)">Delete</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'actions') {
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Action buttons</h3>
+          <app-admin-button variant="primary" (click)="saveActions()">Save config</app-admin-button>
+        </div>
+
+        <div class="settings-block">
+          <h4>Contact Me — scroll to section</h4>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Button label</label>
+              <input type="text" class="field-input" [(ngModel)]="buttonsForm.contactLabel" placeholder="Contact Me" />
+            </div>
+            <div class="form-field">
+              <label>Scroll target (section id)</label>
+              <input type="text" class="field-input" [(ngModel)]="buttonsForm.contactScrollTarget" placeholder="contact" />
+              <small class="field-hint">No # prefix — defaults to scroll to <code>#contact</code></small>
+            </div>
+            <div class="form-field">
+              <label>Variant</label>
+              <select class="field-input" [(ngModel)]="buttonsForm.contactVariant">
+                @for (v of buttonVariants; track v) {
+                  <option [value]="v">{{ v }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Border beam</label>
+              <select class="field-input" [(ngModel)]="buttonsForm.contactBorderBeam">
+                @for (b of borderBeams; track b) {
+                  <option [value]="b">{{ b }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Show button</label>
+              <label class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="buttonsForm.contactEnabled" />
+                <span>Active on Home</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <h4>Download CV</h4>
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Button label</label>
+              <input type="text" class="field-input" [(ngModel)]="buttonsForm.cvLabel" placeholder="Download CV" />
+            </div>
+            <div class="form-field">
+              <label>URL file CV</label>
+              <input type="text" class="field-input" [(ngModel)]="buttonsForm.cvUrl" placeholder="/assets/cv/..." />
+            </div>
+            <div class="form-field">
+              <label>Variant</label>
+              <select class="field-input" [(ngModel)]="buttonsForm.cvVariant">
+                @for (v of buttonVariants; track v) {
+                  <option [value]="v">{{ v }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Border beam</label>
+              <select class="field-input" [(ngModel)]="buttonsForm.cvBorderBeam">
+                @for (b of borderBeams; track b) {
+                  <option [value]="b">{{ b }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Show button</label>
+              <label class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="buttonsForm.cvEnabled" />
+                <span>Active on Home</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <app-admin-confirm-dialog
+    [isOpen]="confirmOpen()"
+    [config]="confirmConfig()"
+    (confirmed)="onConfirmDelete()"
+    (cancelled)="closeConfirm()"
+  />
+
+  <app-admin-dialog
+    [isOpen]="dialogMode() !== null"
+    [hasCustomFooter]="true"
+    [config]="formDialogConfig()"
+    (closed)="closeDialog()"
+  >
+    <div class="form-grid">
+      @if (dialogEntity() === 'typing') {
+        <div class="form-field full">
+          <label>Typing content <span class="req">*</span></label>
+          <input type="text" class="field-input" [(ngModel)]="typingForm.text" placeholder="Full Stack Developer" />
+        </div>
+        <div class="form-field">
+          <label>Display order</label>
+          <input type="number" class="field-input" [(ngModel)]="typingForm.sortOrder" min="1" />
+        </div>
+      } @else {
+        <div class="form-field">
+          <label>Name <span class="req">*</span></label>
+          <input type="text" class="field-input" [(ngModel)]="socialForm.name" placeholder="GitHub" />
+        </div>
+        <div class="form-field">
+          <label>URL <span class="req">*</span></label>
+          <input type="text" class="field-input" [(ngModel)]="socialForm.url" placeholder="https://github.com/..." />
+        </div>
+        <div class="form-field full">
+          <label>Icon URL</label>
+          <input type="text" class="field-input" [(ngModel)]="socialForm.icon" placeholder="https://..." />
+        </div>
+        <div class="form-field">
+          <label>Display order</label>
+          <input type="number" class="field-input" [(ngModel)]="socialForm.sortOrder" min="1" />
+        </div>
+      }
+    </div>
+
+    <ng-container slot="footer">
+      <div class="form-dialog-footer">
+        <label class="status-switch dialog-status" [class.inactive]="!formIsActive">
+          <input type="checkbox" [(ngModel)]="formIsActive" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+          <span class="switch-text">{{ formIsActive ? 'Active — visible on Home' : 'Inactive — hidden from Home' }}</span>
+        </label>
+        <div class="dialog-actions">
+          <app-admin-button variant="secondary" (click)="closeDialog()">Cancel</app-admin-button>
+          <app-admin-button variant="primary" (click)="saveDialog()">Save</app-admin-button>
+        </div>
+      </div>
+    </ng-container>
+  </app-admin-dialog>
+</app-admin-page>

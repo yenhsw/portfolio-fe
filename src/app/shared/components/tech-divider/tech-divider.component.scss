@@ -1,0 +1,69 @@
+// ============================================================
+// TECH DIVIDER STYLES
+// ============================================================
+
+@use 'app/theme/variables' as *;
+
+.tech-divider {
+  margin: 0;
+  border: none;
+
+  // Horizontal
+  &--horizontal {
+    width: 100%;
+    height: 1px;
+
+    &.tech-divider--solid {
+      background: var(--border);
+    }
+
+    &.tech-divider--gradient {
+      background: linear-gradient(
+        90deg,
+        transparent,
+        var(--border-accent),
+        transparent
+      );
+    }
+
+    &.tech-divider--glow {
+      background: linear-gradient(
+        90deg,
+        transparent,
+        var(--primary),
+        transparent
+      );
+      box-shadow: 0 0 10px var(--glow-primary-sm);
+    }
+  }
+
+  // Vertical
+  &--vertical {
+    width: 1px;
+    height: 100%;
+    min-height: 20px;
+
+    &.tech-divider--solid {
+      background: var(--border);
+    }
+
+    &.tech-divider--gradient {
+      background: linear-gradient(
+        180deg,
+        transparent,
+        var(--border-accent),
+        transparent
+      );
+    }
+
+    &.tech-divider--glow {
+      background: linear-gradient(
+        180deg,
+        transparent,
+        var(--primary),
+        transparent
+      );
+      box-shadow: 0 0 10px var(--glow-primary-sm);
+    }
+  }
+}

@@ -1,0 +1,235 @@
+@if (hasAnyContent()) {
+  <section id="contact" class="contact-section">
+    <div class="contact-bg">
+      <div class="bg-grid"></div>
+      <div class="bg-glow glow-1"></div>
+      <div class="bg-glow glow-2"></div>
+    </div>
+
+    <div class="container">
+      <div class="section-header" [class.visible]="isVisible()">
+        <span class="section-tag">{{ section().sectionTag }}</span>
+        <h2 class="section-title">
+          <span class="title-accent">{{ section().titleAccent }}</span>
+          <span class="title-text">{{ section().titleText }}</span>
+        </h2>
+        <p class="section-subtitle">{{ section().subtitle }}</p>
+      </div>
+
+      <div class="contact-shell" [class.visible]="isVisible()">
+        <div class="contact-layout">
+          <aside class="contact-side">
+            <div class="side-block">
+              <h3 class="side-title">{{ section().infoTitle }}</h3>
+
+              @if (contactInfo().length > 0) {
+                <div class="info-grid">
+                  @for (info of contactInfo(); track info.label; let i = $index) {
+                    <a
+                      [href]="info.link || '#'"
+                      class="info-tile"
+                      [class.no-link]="!info.link"
+                      [class.is-active]="hoveredCard() === i"
+                      (mouseenter)="onCardHover(i)"
+                      (mouseleave)="onCardLeave()"
+                      (click)="!info.link && $event.preventDefault()"
+                    >
+                      <span class="tile-icon">
+                        <span [innerHTML]="info.icon"></span>
+                      </span>
+                      <span class="tile-label">{{ info.label }}</span>
+                      <span class="tile-value">{{ info.value }}</span>
+                    </a>
+                  }
+                </div>
+              }
+            </div>
+
+            @if (socialLinks().length > 0) {
+              <div class="side-block side-block--social">
+                <h4 class="side-subtitle">{{ section().socialTitle }}</h4>
+                <div class="social-row">
+                  @for (social of socialLinks(); track social.name) {
+                    <a
+                      [href]="social.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="social-pill"
+                      [class.is-active]="hoveredSocial() === social.name"
+                      [style.--accent]="social.color"
+                      [attr.title]="social.name"
+                      [attr.aria-label]="social.name"
+                      (mouseenter)="onSocialHover(social.name)"
+                      (mouseleave)="onSocialLeave()"
+                    >
+                      <span [innerHTML]="social.icon"></span>
+                    </a>
+                  }
+                </div>
+              </div>
+            }
+
+            @if (map().isActive && map().text) {
+              <div class="location-bar">
+                <span class="location-pin">{{ map().icon }}</span>
+                <div class="location-text">
+                  <span class="location-label">Based in</span>
+                  <span class="location-value">{{ map().text }}</span>
+                </div>
+              </div>
+            }
+          </aside>
+
+          @if (formSettings().enabled) {
+            <div class="contact-form-col">
+              <div class="form-panel">
+                <div class="form-head">
+                  <div class="form-head-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="form-title">{{ section().formTitle }}</h3>
+                    <p class="form-desc">Share your idea — I usually reply within 24 hours.</p>
+                  </div>
+                </div>
+
+                <form class="contact-form" (ngSubmit)="onSubmit()">
+                  <div class="field-row">
+                    <div class="field">
+                      <label for="name">Full Name</label>
+                      <input
+                        type="text"
+                        id="name"
+                        placeholder="John Doe"
+                        [(ngModel)]="formData.name"
+                        name="name"
+                        required
+                        #nameInput="ngModel"
+                        [class.invalid]="nameInput.invalid && nameInput.touched"
+                      />
+                      @if (nameInput.invalid && nameInput.touched) {
+                        <span class="field-error">Required</span>
+                      }
+                    </div>
+                    <div class="field">
+                      <label for="email">Email</label>
+                      <input
+                        type="email"
+                        id="email"
+                        placeholder="john@example.com"
+                        [(ngModel)]="formData.email"
+                        name="email"
+                        required
+                        email
+                        #emailInput="ngModel"
+                        [class.invalid]="emailInput.invalid && emailInput.touched"
+                      />
+                      @if (emailInput.invalid && emailInput.touched) {
+                        <span class="field-error">Valid email required</span>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="field-row">
+                    <div class="field">
+                      <label for="phone">Phone</label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        placeholder="+84 123 456 789"
+                        [(ngModel)]="formData.phone"
+                        name="phone"
+                      />
+                    </div>
+                    <div class="field">
+                      <label for="subject">Subject</label>
+                      <input
+                        type="text"
+                        id="subject"
+                        placeholder="Project inquiry"
+                        [(ngModel)]="formData.subject"
+                        name="subject"
+                        required
+                        #subjectInput="ngModel"
+                        [class.invalid]="subjectInput.invalid && subjectInput.touched"
+                      />
+                      @if (subjectInput.invalid && subjectInput.touched) {
+                        <span class="field-error">Required</span>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="field field--full">
+                    <label for="message">Message</label>
+                    <textarea
+                      id="message"
+                      placeholder="Tell me about your project, timeline, and goals..."
+                      [(ngModel)]="formData.message"
+                      name="message"
+                      required
+                      rows="4"
+                      [maxlength]="formSettings().messageMaxLength"
+                      #messageInput="ngModel"
+                      [class.invalid]="messageInput.invalid && messageInput.touched"
+                    ></textarea>
+                    <div class="field-meta">
+                      @if (messageInput.invalid && messageInput.touched) {
+                        <span class="field-error">Required</span>
+                      } @else {
+                        <span></span>
+                      }
+                      <span class="char-count">{{ formData.message.length }}/{{ formSettings().messageMaxLength }}</span>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="submit-btn" [class.loading]="isSubmitting()" [disabled]="isSubmitting()">
+                    <span class="submit-label">Send Message</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="22" y1="2" x2="11" y2="13"/>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                    <span class="submit-spinner"></span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      @if (cta().isActive) {
+        <div class="cta-banner" [class.visible]="isVisible()">
+          <div class="cta-inner">
+            <div class="cta-copy">
+              <h3>{{ cta().title }}</h3>
+              <p>{{ cta().description }}</p>
+            </div>
+            <div class="cta-actions">
+              <a [href]="cta().primaryLink" class="cta-btn cta-btn--primary">
+                {{ cta().primaryLabel }}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </a>
+              <a
+                [href]="cta().secondaryLink"
+                class="cta-btn cta-btn--ghost"
+                [attr.download]="cta().secondaryLink.startsWith('/') || cta().secondaryLink.includes('.pdf') ? '' : null"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                {{ cta().secondaryLabel }}
+              </a>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+}

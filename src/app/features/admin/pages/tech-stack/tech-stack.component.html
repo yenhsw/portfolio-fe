@@ -1,0 +1,316 @@
+<app-admin-page
+  [title]="'admin.pages.techStack.title' | t"
+  [subtitle]="'admin.pages.techStack.subtitle' | t"
+  [icon]="pageIcon"
+>
+  <div class="ts-type-bar" [class.visible]="isReady()">
+    <div class="type-info">
+      <span class="type-label">{{ 'admin.pages.techStack.sectionType' | t }}</span>
+      <span class="type-badge">{{ sectionType }}</span>
+      <span class="type-name">{{ sectionTypeLabel }}</span>
+    </div>
+    <p class="type-hint">{{ 'admin.pages.techStack.sectionTypeHint' | t }}</p>
+  </div>
+
+  <div class="ts-tabs" [class.visible]="isReady()">
+    @for (tab of tabList(); track tab.key) {
+      <button class="ts-tab" [class.active]="activeTab() === tab.key" (click)="setTab(tab.key)">
+        <span class="tab-label">{{ tab.label }}</span>
+        <span class="tab-desc">{{ tab.description }}</span>
+      </button>
+    }
+  </div>
+
+  <div class="ts-content" [class.visible]="isReady()">
+    @if (activeTab() === 'section') {
+      <div class="panel">
+        <div class="panel-header">
+          <h3>{{ 'admin.pages.techStack.sectionPanel' | t }}</h3>
+          <app-admin-button variant="primary" (click)="saveSection()">{{ 'admin.common.saveConfig' | t }}</app-admin-button>
+        </div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>{{ 'admin.pages.techStack.sectionType' | t }}</label>
+            <input type="text" class="field-input field-readonly" [value]="sectionType" readonly />
+          </div>
+          <div class="form-field">
+            <label>{{ 'admin.common.sectionTag' | t }}</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.sectionTag" placeholder="What I Know" />
+          </div>
+          <div class="form-field">
+            <label>{{ 'admin.common.headingAccent' | t }}</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.titleAccent" placeholder="TECH" />
+          </div>
+          <div class="form-field">
+            <label>{{ 'admin.common.headingText' | t }}</label>
+            <input type="text" class="field-input" [(ngModel)]="sectionForm.titleText" placeholder="STACK" />
+          </div>
+          <div class="form-field full">
+            <label>{{ 'admin.common.sectionDescription' | t }}</label>
+            <textarea class="field-textarea" rows="2" [(ngModel)]="sectionForm.subtitle"></textarea>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'statistics') {
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>{{ 'admin.common.countUpStatistics' | t }}</h3>
+            <p class="panel-desc">{{ 'admin.pages.techStack.statisticsDesc' | t }}</p>
+          </div>
+          <app-admin-button variant="primary" (click)="openAdd('statistics')">{{ 'admin.pages.techStack.addStatistic' | t }}</app-admin-button>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'admin.common.value' | t }}</th>
+                <th>{{ 'admin.pages.educational.itemName' | t }}</th>
+                <th>{{ 'admin.common.order' | t }}</th>
+                <th>{{ 'admin.common.status' | t }}</th>
+                <th>{{ 'admin.common.actions' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.sortedStatistics(); track item.id) {
+                <tr [class.inactive-row]="!item.isActive">
+                  <td><strong>{{ displayStatValue(item) }}</strong></td>
+                  <td>{{ item.label }}</td>
+                  <td>{{ item.sortOrder }}</td>
+                  <td>
+                    <label class="status-switch" [class.inactive]="!item.isActive">
+                      <input type="checkbox" [checked]="item.isActive" (change)="setStatus('statistics', item.id, $any($event.target).checked)" />
+                      <span class="switch-track"><span class="switch-thumb"></span></span>
+                      <span class="switch-text">{{ item.isActive ? ('admin.common.active' | t) : ('admin.common.inactive' | t) }}</span>
+                    </label>
+                  </td>
+                  <td class="actions">
+                    <button class="action-btn" (click)="openEdit('statistics', item.id)">{{ 'admin.common.edit' | t }}</button>
+                    <button class="action-btn danger" (click)="deleteItem('statistics', item.id)">{{ 'admin.common.delete' | t }}</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'categories') {
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>{{ 'admin.pages.techStack.categoriesPanel' | t }}</h3>
+            <p class="panel-desc">{{ 'admin.common.onlyActiveOnSite' | t }}</p>
+          </div>
+          <app-admin-button variant="primary" (click)="openAdd('categories')">{{ 'admin.pages.techStack.addCategory' | t }}</app-admin-button>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{{ 'admin.common.icon' | t }}</th>
+                <th>{{ 'admin.common.name' | t }}</th>
+                <th>Color</th>
+                <th>{{ 'admin.common.order' | t }}</th>
+                <th>{{ 'admin.common.status' | t }}</th>
+                <th>{{ 'admin.common.actions' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.sortedCategories(); track item.id) {
+                <tr [class.inactive-row]="!item.isActive">
+                  <td><span class="cell-icon">{{ item.icon }}</span></td>
+                  <td>{{ item.name }}</td>
+                  <td>
+                    <span class="color-preview" [style.background]="item.color"></span>
+                    {{ item.color }}
+                  </td>
+                  <td>{{ item.sortOrder }}</td>
+                  <td>
+                    <label class="status-switch" [class.inactive]="!item.isActive">
+                      <input type="checkbox" [checked]="item.isActive" (change)="setStatus('categories', item.id, $any($event.target).checked)" />
+                      <span class="switch-track"><span class="switch-thumb"></span></span>
+                      <span class="switch-text">{{ item.isActive ? ('admin.common.active' | t) : ('admin.common.inactive' | t) }}</span>
+                    </label>
+                  </td>
+                  <td class="actions">
+                    <button class="action-btn" (click)="openEdit('categories', item.id)">{{ 'admin.common.edit' | t }}</button>
+                    <button class="action-btn danger" (click)="deleteItem('categories', item.id)">{{ 'admin.common.delete' | t }}</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'skills') {
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>{{ 'admin.pages.techStack.skillsPanel' | t }}</h3>
+            <p class="panel-desc">{{ 'admin.common.onlyActiveOnSite' | t }}</p>
+          </div>
+          <app-admin-button variant="primary" (click)="openAdd('skills')">{{ 'admin.pages.techStack.addSkill' | t }}</app-admin-button>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Logo</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Level</th>
+                <th>{{ 'admin.common.order' | t }}</th>
+                <th>{{ 'admin.common.status' | t }}</th>
+                <th>{{ 'admin.common.actions' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of store.sortedSkills(); track item.id) {
+                <tr [class.inactive-row]="!item.isActive">
+                  <td>
+                    @if (item.logo) {
+                      <img class="logo-thumb" [src]="item.logo" [alt]="item.name" />
+                    } @else {
+                      <span class="logo-placeholder">—</span>
+                    }
+                  </td>
+                  <td>{{ item.name }}</td>
+                  <td>{{ store.categoryName(item.categoryId) }}</td>
+                  <td>{{ item.level }}%</td>
+                  <td>{{ item.sortOrder }}</td>
+                  <td>
+                    <label class="status-switch" [class.inactive]="!item.isActive">
+                      <input type="checkbox" [checked]="item.isActive" (change)="setStatus('skills', item.id, $any($event.target).checked)" />
+                      <span class="switch-track"><span class="switch-thumb"></span></span>
+                      <span class="switch-text">{{ item.isActive ? ('admin.common.active' | t) : ('admin.common.inactive' | t) }}</span>
+                    </label>
+                  </td>
+                  <td class="actions">
+                    <button class="action-btn" (click)="openEdit('skills', item.id)">{{ 'admin.common.edit' | t }}</button>
+                    <button class="action-btn danger" (click)="deleteItem('skills', item.id)">{{ 'admin.common.delete' | t }}</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </div>
+
+  <app-admin-confirm-dialog
+    [isOpen]="confirmOpen()"
+    [config]="confirmConfig()"
+    (confirmed)="onConfirmDelete()"
+    (cancelled)="closeConfirm()"
+  />
+
+  <app-admin-dialog
+    [isOpen]="dialogMode() !== null"
+    [hasCustomFooter]="true"
+    [config]="formDialogConfig()"
+    (closed)="closeDialog()"
+  >
+    <div class="form-dialog">
+      @if (dialogEntity() === 'statistics') {
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Value (number)</label>
+            <input type="number" class="field-input" [(ngModel)]="statForm.valueNumber" min="0" />
+          </div>
+          <div class="form-field">
+            <label>Suffix</label>
+            <input type="text" class="field-input" [(ngModel)]="statForm.valueSuffix" placeholder="+" />
+          </div>
+          <div class="form-field">
+            <label>Display order</label>
+            <input type="number" class="field-input" [(ngModel)]="statForm.sortOrder" min="1" />
+          </div>
+          <div class="form-field full">
+            <label>Item name <span class="req">*</span></label>
+            <input type="text" class="field-input" [(ngModel)]="statForm.label" placeholder="Technologies" />
+          </div>
+        </div>
+      }
+
+      @if (dialogEntity() === 'categories') {
+        <div class="form-grid">
+          <div class="form-field icon-field">
+            <label>Icon (emoji)</label>
+            <div class="icon-input-row">
+              <span class="icon-preview">{{ categoryForm.icon || '🎨' }}</span>
+              <input type="text" class="field-input" [(ngModel)]="categoryForm.icon" placeholder="🎨" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Accent color</label>
+            <input type="color" class="field-input color-input" [(ngModel)]="categoryForm.color" />
+          </div>
+          <div class="form-field">
+            <label>Display order</label>
+            <input type="number" class="field-input" [(ngModel)]="categoryForm.sortOrder" min="1" />
+          </div>
+          <div class="form-field full">
+            <label>Category name <span class="req">*</span></label>
+            <input type="text" class="field-input" [(ngModel)]="categoryForm.name" placeholder="Frontend" />
+          </div>
+        </div>
+      }
+
+      @if (dialogEntity() === 'skills') {
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Category <span class="req">*</span></label>
+            <select class="field-input" [(ngModel)]="skillForm.categoryId">
+              @for (cat of store.sortedCategories(); track cat.id) {
+                <option [value]="cat.id">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Level (0–100)</label>
+            <input type="number" class="field-input" [(ngModel)]="skillForm.level" min="0" max="100" />
+          </div>
+          <div class="form-field">
+            <label>Display order</label>
+            <input type="number" class="field-input" [(ngModel)]="skillForm.sortOrder" min="1" />
+          </div>
+          <div class="form-field full">
+            <label>Skill name <span class="req">*</span></label>
+            <input type="text" class="field-input" [(ngModel)]="skillForm.name" placeholder="Angular" />
+          </div>
+          <div class="form-field full">
+            <label>Logo URL</label>
+            <input type="url" class="field-input" [(ngModel)]="skillForm.logo" placeholder="https://cdn.jsdelivr.net/..." />
+          </div>
+          @if (skillForm.logo) {
+            <div class="form-field full logo-preview-row">
+              <label>Preview</label>
+              <img class="logo-preview" [src]="skillForm.logo" [alt]="skillForm.name" />
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <ng-container slot="footer">
+      <div class="form-dialog-footer">
+        <label class="status-switch dialog-status" [class.inactive]="!formIsActive">
+          <input type="checkbox" [(ngModel)]="formIsActive" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+          <span class="switch-text">{{ formIsActive ? ('admin.common.activeVisible' | t) : ('admin.common.inactiveHidden' | t) }}</span>
+        </label>
+        <div class="dialog-actions">
+          <app-admin-button variant="secondary" (click)="closeDialog()">{{ 'admin.common.cancel' | t }}</app-admin-button>
+          <app-admin-button variant="primary" (click)="saveDialog()">{{ 'admin.common.save' | t }}</app-admin-button>
+        </div>
+      </div>
+    </ng-container>
+  </app-admin-dialog>
+</app-admin-page>

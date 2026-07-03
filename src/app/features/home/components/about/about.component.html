@@ -1,0 +1,106 @@
+<section id="about" class="about-section">
+  <!-- Background Effects -->
+  <div class="about-bg">
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+  </div>
+
+  <div class="container">
+    <!-- Section Title -->
+    <div class="section-header" [class.visible]="isVisible()">
+      <span class="section-tag">Resume</span>
+      <h2 class="section-title">
+        <span class="title-text">ABOUT</span>
+        <span class="title-accent">ME</span>
+      </h2>
+      <p class="section-subtitle">
+        A summary of my education, skills, and professional background.
+      </p>
+    </div>
+
+    <!-- Main CV Grid -->
+    <div class="cv-grid" [class.visible]="isVisible()">
+      <!-- Education Timeline -->
+      <div class="cv-card" [class.revealed]="isVisible()">
+        <h3 class="cv-card-title">
+          <span class="cv-icon">🎓</span>
+          Education
+        </h3>
+
+        <div class="education-timeline">
+          @for (edu of education; track edu.year; let i = $index) {
+            <div class="education-item" [class.revealed]="isVisible()" [style.animation-delay]="(i * 0.2) + 's'">
+              <div class="edu-dot"></div>
+              <div class="edu-content">
+                <div class="edu-header">
+                  <h4 class="edu-school">{{ edu.school }}</h4>
+                  <span class="edu-year">{{ edu.year }}</span>
+                </div>
+                <p class="edu-degree">{{ edu.degree }}</p>
+                @if (edu.details) {
+                  <p class="edu-details">{{ edu.details }}</p>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Courses & Certifications -->
+      <div class="cv-card" [class.revealed]="isVisible()">
+        <h3 class="cv-card-title">
+          <span class="cv-icon">📜</span>
+          Courses & Certifications
+        </h3>
+
+        <div class="courses-list">
+          @for (course of courses; track course.name; let i = $index) {
+            <div class="course-item" [class.revealed]="isVisible()" [style.animation-delay]="(i * 0.1) + 's'">
+              <div class="course-icon-wrap">
+                <span class="course-emoji">{{ course.icon }}</span>
+              </div>
+              <div class="course-content">
+                <h5 class="course-name">{{ course.name }}</h5>
+                <span class="course-provider">{{ course.provider }}</span>
+              </div>
+              <span class="course-year">{{ course.year }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Language -->
+      <div class="cv-card" [class.revealed]="isVisible()">
+        <h3 class="cv-card-title">
+          <span class="cv-icon">🌐</span>
+          Language
+        </h3>
+
+        <div class="language-list">
+          @for (lang of languages; track lang.name; let i = $index) {
+            <div class="language-item" [class.revealed]="isVisible()" [style.animation-delay]="(i * 0.1) + 's'">
+              <span class="language-name">{{ lang.name }}</span>
+              <span class="language-level">{{ lang.level }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-section" [class.visible]="isVisible()">
+      <div class="stats-grid">
+        @for (stat of statistics; track stat.label; let i = $index) {
+          <div class="stat-card" [class.revealed]="isVisible()" [style.animation-delay]="(i * 0.15) + 's'">
+            <div class="stat-glow"></div>
+            <div class="stat-value">
+              <span class="stat-number">{{ displayValues()[i] }}</span>
+              <span class="stat-suffix">{{ stat.suffix }}</span>
+            </div>
+            <div class="stat-label">{{ stat.label }}</div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>

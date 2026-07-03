@@ -1,0 +1,192 @@
+// ============================================================
+// ADMIN DIALOG STYLES
+// Generic Modal Dialog with Animation
+// ============================================================
+
+@use 'app/theme/variables' as *;
+@use 'app/theme/mixins' as *;
+
+// ============================================================
+// OVERLAY
+// ============================================================
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 1100;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// ============================================================
+// CONTAINER
+// ============================================================
+
+.dialog-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: min(90vh, 860px);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(10, 15, 26, 0.98) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: var(--radius-2xl);
+  box-shadow:
+    0 25px 50px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 0 40px rgba(168, 85, 247, 0.08);
+  animation: dialogScale 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, #06b6d4 100%);
+    z-index: 1;
+  }
+
+  // Size variants
+  &.size-sm { width: 100%; max-width: 400px; }
+  &.size-md { width: 100%; max-width: 500px; }
+  &.size-lg { width: 100%; max-width: 700px; }
+  &.size-xl { width: 100%; max-width: 900px; }
+  &.size-full { width: 95vw; max-width: none; }
+}
+
+@keyframes dialogScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+// ============================================================
+// HEADER
+// ============================================================
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  flex-shrink: 0;
+}
+
+.dialog-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.dialog-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    color: var(--error);
+    background: rgba(239, 68, 68, 0.1);
+  }
+}
+
+// ============================================================
+// CONTENT
+// ============================================================
+
+.dialog-content {
+  flex: 1;
+  padding: var(--space-6);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  @include admin-scrollbar;
+}
+
+// ============================================================
+// FOOTER
+// ============================================================
+
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.dialog-btn {
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &.primary {
+    color: var(--background);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    border: none;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+    }
+  }
+
+  &.secondary {
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border);
+
+    &:hover {
+      color: var(--text-primary);
+      border-color: var(--primary);
+    }
+  }
+
+  &.danger {
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--danger) 0%, var(--danger-dark) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.35);
+    }
+  }
+}
