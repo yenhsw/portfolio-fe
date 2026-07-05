@@ -52,6 +52,7 @@ export const API_ENDPOINTS = {
   EXPERIENCE_SECTION: '/api/admin/experience/section',
   EXPERIENCE_EXPERIENCES: '/api/admin/experience/experiences',
   EXPERIENCE_EXPERIENCE_BY_ID: (id: string) => `/api/admin/experience/experiences/${id}`,
+  EXPERIENCE_EXPERIENCE_STATUS: (id: string) => `/api/admin/experience/experiences/${id}/status`,
 
   /** @deprecated Dùng EXPERIENCE_* */
   CAREER_JOURNEY_SECTION: '/api/admin/experience/section',
@@ -71,6 +72,10 @@ export const API_ENDPOINTS = {
   EDUCATIONAL_CERTIFICATE_BY_ID: (id: string) => `/api/admin/educational/certificates/${id}`,
   EDUCATIONAL_FUTURE_GOALS: '/api/admin/educational/future-goals',
   EDUCATIONAL_FUTURE_GOAL_BY_ID: (id: string) => `/api/admin/educational/future-goals/${id}`,
+  EDUCATIONAL_HIGHLIGHT_STATUS: (id: string) => `/api/admin/educational/highlights/${id}/status`,
+  EDUCATIONAL_TIMELINE_STATUS: (id: string) => `/api/admin/educational/timeline/${id}/status`,
+  EDUCATIONAL_CERTIFICATE_STATUS: (id: string) => `/api/admin/educational/certificates/${id}/status`,
+  EDUCATIONAL_FUTURE_GOAL_STATUS: (id: string) => `/api/admin/educational/future-goals/${id}/status`,
 
   // Skills / Tech Stack (Home #skills) — `/api/admin/skills/*?type=1`
   SKILLS_ADMIN: '/api/admin/skills',
@@ -82,6 +87,9 @@ export const API_ENDPOINTS = {
   SKILLS_CATEGORY_BY_ID: (id: string) => `/api/admin/skills/categories/${id}`,
   SKILLS_ITEMS: '/api/admin/skills/skills',
   SKILLS_ITEM_BY_ID: (id: string) => `/api/admin/skills/skills/${id}`,
+  SKILLS_STATISTIC_STATUS: (id: string) => `/api/admin/skills/statistics/${id}/status`,
+  SKILLS_CATEGORY_STATUS: (id: string) => `/api/admin/skills/categories/${id}/status`,
+  SKILLS_ITEM_STATUS: (id: string) => `/api/admin/skills/skills/${id}/status`,
 
   /** @deprecated Dùng SKILLS_* */
   TECH_STACK_SECTION: '/api/admin/skills/section',
@@ -101,6 +109,9 @@ export const API_ENDPOINTS = {
   PROJECTS_FILTER_BY_ID: (id: string) => `/api/admin/projects/filters/${id}`,
   PROJECTS_ITEMS: '/api/admin/projects/projects',
   PROJECTS_ITEM_BY_ID: (id: string) => `/api/admin/projects/projects/${id}`,
+  PROJECTS_FILTER_STATUS: (id: string) => `/api/admin/projects/filters/${id}/status`,
+  PROJECTS_ITEM_STATUS: (id: string) => `/api/admin/projects/projects/${id}/status`,
+  PROJECTS_ITEM_FEATURED: (id: string) => `/api/admin/projects/projects/${id}/featured`,
 
   /** @deprecated Dùng PROJECTS_* */
   FEATURED_PROJECTS_SECTION: '/api/admin/projects/section',
@@ -121,6 +132,10 @@ export const API_ENDPOINTS = {
   CONTACT_MAP: '/api/admin/contact/map',
   CONTACT_CTA: '/api/admin/contact/cta',
   CONTACT_FORM: '/api/admin/contact/form',
+  CONTACT_INFO_STATUS: (id: string) => `/api/admin/contact/info/${id}/status`,
+  CONTACT_SOCIAL_STATUS: (id: string) => `/api/admin/contact/social/${id}/status`,
+  CONTACT_MAIL_SEND: '/api/admin/contact/mail/send',
+  CONTACT_MAIL_RECEIVE: '/api/admin/contact/mail/receive',
 
   /** @deprecated Dùng CONTACT_* */
   CONTACT_SECTION_CONFIG: '/api/admin/contact/section',
@@ -174,6 +189,10 @@ export const API_ENDPOINTS = {
   CONTACT: '/api/contact',
   MESSAGES: '/api/messages',
   MESSAGE_BY_ID: (id: string) => `/api/messages/${id}`,
+  MESSAGE_READ: (id: string) => `/api/messages/${id}/read`,
+  MESSAGE_STAR: (id: string) => `/api/messages/${id}/star`,
+  MESSAGE_ARCHIVE: (id: string) => `/api/messages/${id}/archive`,
+  MESSAGE_RESTORE: (id: string) => `/api/messages/${id}/restore`,
 
   // Auth
   AUTH_LOGIN: '/api/auth/login',

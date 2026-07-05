@@ -9,11 +9,12 @@ Tài liệu chuẩn để **Backend implement API** và **Frontend map dữ li�
 | Public component | `ContactComponent` |
 | Admin route | `/admin/contact-section` |
 | Model | `src/app/features/admin/models/contact-section.model.ts` |
-| Store (mock) | `src/app/features/admin/store/contact-section.store.ts` |
+| Service | `src/app/features/admin/services/contact-section.service.ts` |
+| Store | `src/app/features/admin/store/contact-section.store.ts` |
 | Type constant | `section-type.constants.ts` → `SECTION_API_TYPE = 1` |
 | API constants | `CONTACT_*` (`/api/admin/contact/*?type=1`) |
-| localStorage key (mock) | `portfolio_contact_section_data` |
-| Form submit API | `API_ENDPOINTS.CONTACT` → `POST /api/contact` |
+| Backend doc | `portfolio-api/doc/contact.md` |
+| Form submit API | `POST /api/contact` |
 
 > **Phân biệt section:** Endpoint `/api/admin/contact`, luôn kèm `type: 1`.
 
@@ -266,10 +267,23 @@ Form field labels (Full Name, Email...) **hardcoded HTML** — có thể mở r�
 - [x] Tab Social — CRUD + color + SVG + toggle Active
 - [x] Tab Map, CTA & Form — map, CTA buttons, form toggle/max length/success message
 - [x] Public `ContactComponent` wired qua `ContactSectionStore`
-- [x] Toast notification sau submit (mock)
-- [ ] Wire form → `POST /api/contact`
-- [ ] Google Map iframe từ `googleMapUrl`
-- [ ] Kết nối API thật (thay localStorage)
+- [x] Toast notification sau submit
+- [x] Wire form → `POST /api/contact`
+- [x] Admin tab Email — SMTP send + notification receive
+- [x] Kết nối API thật (`ContactSectionService` + `ContactSectionStore`)
+- [x] Admin inbox `/api/messages` (`MessageService`)
+
+---
+
+## Ghi chú triển khai FE
+
+- **`ContactSectionService`** — gọi HTTP theo `portfolio-api/doc/contact.md`
+- **`ContactSectionStore.load()`** — Home `#contact`: `GET /api/public/contact?type=1`
+- **`ContactSectionStore.loadAdmin()`** — Admin: 8 GET (section + info + social + map + cta + form + mail send/receive)
+- **`ContactSectionStore.submitContact()`** — Home form: `POST /api/contact`
+- Tab **Email config** — `PUT /api/admin/contact/mail/send` + `PUT /api/admin/contact/mail/receive`
+- **`MessageService`** — Admin inbox `/api/messages`
+- API lỗi → fallback mock data
 
 ---
 

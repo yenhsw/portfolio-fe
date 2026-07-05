@@ -9,10 +9,11 @@ Tài liệu chuẩn để **Backend implement API** và **Frontend map dữ li�
 | Public component | `ExperienceComponent` |
 | Admin route | `/admin/career-journey` |
 | Model | `src/app/features/admin/models/career-journey.model.ts` |
-| Store (mock) | `src/app/features/admin/store/career-journey.store.ts` |
+| Service | `src/app/features/admin/services/experience.service.ts` |
+| Store | `src/app/features/admin/store/career-journey.store.ts` |
 | Type constant | `section-type.constants.ts` → `SECTION_API_TYPE = 1` |
 | API constants | `EXPERIENCE_*` (`/api/admin/experience/*?type=1`) |
-| localStorage key (mock) | `portfolio_career_journey_data` |
+| Backend doc | `portfolio-api/doc/experience.md` |
 
 > **Phân biệt section:** Hero `/api/admin/hero`, Educational `/api/admin/educational`, Experience `/api/admin/experience`. Cả ba đều `type: 1`.
 
@@ -324,30 +325,22 @@ Bảng riêng theo module Experience. Field **`type INT NOT NULL DEFAULT 1`**.
 
 ## Ghi chú triển khai FE
 
-- Store mock: `portfolio_career_journey_data` — mọi entity có `type: 1`
+- **`ExperienceService`** — gọi HTTP theo `portfolio-api/doc/experience.md`
+- **`CareerJourneyStore.load()`** — Home `#experience`: `GET /api/public/experience?type=1`
+- **`CareerJourneyStore.loadAdmin()`** — Admin: `GET section` + `GET experiences`, Bearer JWT
+- Mọi entity **luôn có `type: 1`** — FE tự gắn qua `withSectionType()` / `sectionTypeQuery()`
 - Admin badge: **Section type: 1 — Experience**
-- Dialog Add/Edit: FE tự gắn `type: 1`, không hiển thị field
-- Public: `GET EXPERIENCE_PUBLIC` + `?type=1`
+- Dialog Add/Edit: **PUT/POST không gửi `isActive`** — đổi trạng thái qua `PATCH .../{id}/status`
+- API lỗi → fallback mock data (giữ UI chạy được)
 
 ---
 
-## Trạng thái triển khai
+## Checklist Backend Experience
 
-### Admin FE — ✅
-- [x] Model `career-journey.model.ts` + `type: 1`
-- [x] Store localStorage + SSR-safe + auto inject type
-- [x] Page `/admin/career-journey` (2 tabs)
-- [x] CRUD + sortOrder + Active/Inactive
-- [x] Confirm dialog + toast
-
-### Public FE — ✅
-- [x] `ExperienceComponent` đọc `CareerJourneyStore`
-- [x] Ẩn section khi không có dữ liệu active
-
-### Backend API — ⏳
-- [ ] `GET /api/public/experience?type=1`
-- [ ] `GET/PUT /api/admin/experience/section?type=1`
-- [ ] CRUD `/api/admin/experience/experiences`
-- [ ] `PATCH .../experiences/:id/status`
-- [ ] Response luôn include `type: 1`
-- [ ] Reject body `type !== 1`
+- [x] `GET /api/public/experience?type=1`
+- [x] `GET/PUT /api/admin/experience/section?type=1`
+- [x] CRUD `/api/admin/experience/experiences`
+- [x] `PATCH .../experiences/:id/status`
+- [x] Response luôn include `type: 1`
+- [x] Reject body `type !== 1`
+- [x] FE wired (`ExperienceService` + `CareerJourneyStore`)

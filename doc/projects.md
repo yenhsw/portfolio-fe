@@ -9,10 +9,11 @@ Tài liệu chuẩn để **Backend implement API** và **Frontend map dữ li�
 | Public component | `ProjectsComponent` |
 | Admin route | `/admin/featured-projects` |
 | Model | `src/app/features/admin/models/featured-projects.model.ts` |
-| Store (mock) | `src/app/features/admin/store/featured-projects.store.ts` |
+| Service | `src/app/features/admin/services/featured-projects.service.ts` |
+| Store | `src/app/features/admin/store/featured-projects.store.ts` |
 | Type constant | `section-type.constants.ts` → `SECTION_API_TYPE = 1` |
 | API constants | `PROJECTS_*` (`/api/admin/projects/*?type=1`) |
-| localStorage key (mock) | `portfolio_featured_projects_data` |
+| Backend doc | `portfolio-api/doc/projects.md` |
 
 > **Phân biệt section:** Endpoint `/api/admin/projects`, luôn kèm `type: 1`.
 
@@ -310,7 +311,7 @@ PATCH  /api/featured-projects/projects/:id/featured { "isFeatured": true }
 - [x] Tab Dự án — CRUD đầy đủ nested lists
 - [x] Toggle Featured trên bảng
 - [x] Public `ProjectsComponent` wired qua `FeaturedProjectsStore`
-- [ ] Kết nối API thật (thay localStorage)
+- [x] Kết nối API thật (`FeaturedProjectsService` + `FeaturedProjectsStore`)
 - [ ] Hiển thị `image` thay placeholder
 - [ ] Hiển thị `achievements` trong expand
 - [ ] Hiển thị `longDescription`
@@ -329,3 +330,28 @@ PATCH  /api/featured-projects/projects/:id/featured { "isFeatured": true }
 | Route `/admin/featured-projects` | Route `/admin/projects` |
 
 Khi tích hợp API, **ưu tiên `featured-projects.model.ts`** làm source of truth cho section Home `#projects`.
+
+---
+
+## Ghi chú triển khai FE
+
+- **`FeaturedProjectsService`** — gọi HTTP theo `portfolio-api/doc/projects.md`
+- **`FeaturedProjectsStore.load()`** — Home `#projects`: `GET /api/public/projects?type=1`
+- **`FeaturedProjectsStore.loadAdmin()`** — Admin: 3 GET song song (section + filters + projects), Bearer JWT
+- Mọi entity **luôn có `type: 1`** — FE tự gắn qua `withSectionType()` / `sectionTypeQuery()`
+- Filter/Project Add/Edit: **PUT/POST không gửi `isActive`** — đổi trạng thái qua `PATCH .../{id}/status`
+- Toggle Featured trên bảng: `PATCH .../projects/{id}/featured`
+- Không xóa filter có `key === 'all'` (backend + FE đều bảo vệ)
+- API lỗi → fallback mock data (giữ UI chạy được)
+
+---
+
+## Checklist Backend Projects
+
+- [x] `GET /api/public/projects?type=1`
+- [x] `GET/PUT /api/admin/projects/section?type=1`
+- [x] CRUD filters + PATCH status (protect `all`)
+- [x] CRUD projects + PATCH status + PATCH featured
+- [x] Response luôn include `type: 1`
+- [x] Validate `type = 1`
+- [x] FE wired (`FeaturedProjectsService` + `FeaturedProjectsStore`)

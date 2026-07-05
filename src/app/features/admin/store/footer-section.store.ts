@@ -26,11 +26,6 @@ import {
   DEFAULT_FOOTER_DIVIDER,
   DEFAULT_FOOTER_TECH,
   DEFAULT_FOOTER_BOTTOM,
-  MOCK_FOOTER_QUICK_LINKS,
-  MOCK_FOOTER_SERVICES,
-  MOCK_FOOTER_CONTACT,
-  MOCK_FOOTER_SOCIAL,
-  MOCK_FOOTER_TECH_BADGES,
 } from '../models/footer-section.model';
 import { PlatformService } from '../../../core/services/platform.service';
 
@@ -116,11 +111,11 @@ export class FooterSectionStore {
   readonly divider = signal<FooterDividerConfig>({ ...DEFAULT_FOOTER_DIVIDER });
   readonly tech = signal<FooterTechConfig>({ ...DEFAULT_FOOTER_TECH });
   readonly bottom = signal<FooterBottomConfig>({ ...DEFAULT_FOOTER_BOTTOM });
-  readonly quickLinks = signal<FooterLinkItem[]>([...MOCK_FOOTER_QUICK_LINKS]);
-  readonly services = signal<FooterServiceItem[]>([...MOCK_FOOTER_SERVICES]);
-  readonly contactItems = signal<FooterContactItem[]>([...MOCK_FOOTER_CONTACT]);
-  readonly socialLinks = signal<FooterSocialItem[]>([...MOCK_FOOTER_SOCIAL]);
-  readonly techBadges = signal<FooterTechBadge[]>([...MOCK_FOOTER_TECH_BADGES]);
+  readonly quickLinks = signal<FooterLinkItem[]>([]);
+  readonly services = signal<FooterServiceItem[]>([]);
+  readonly contactItems = signal<FooterContactItem[]>([]);
+  readonly socialLinks = signal<FooterSocialItem[]>([]);
+  readonly techBadges = signal<FooterTechBadge[]>([]);
   readonly sectionType = FOOTER_SECTION_TYPE_CODE;
   readonly loading = signal(false);
   private loaded = false;
@@ -141,7 +136,7 @@ export class FooterSectionStore {
     if (this.loaded) return;
 
     if (!this.platform.isBrowser) {
-      this.applyMockData();
+      this.applyEmptyState();
       this.loaded = true;
       return;
     }
@@ -156,35 +151,33 @@ export class FooterSectionStore {
         this.divider.set(ensureDivider(data.divider ?? { ...DEFAULT_FOOTER_DIVIDER }));
         this.tech.set(ensureTechConfig(data.tech ?? { ...DEFAULT_FOOTER_TECH }));
         this.bottom.set(ensureBottom(data.bottom ?? { ...DEFAULT_FOOTER_BOTTOM }));
-        this.quickLinks.set(normalizeSortOrder(data.quickLinks ?? [...MOCK_FOOTER_QUICK_LINKS]).map(ensureQuickLink));
-        this.services.set(normalizeSortOrder(data.services ?? [...MOCK_FOOTER_SERVICES]).map(ensureService));
-        this.contactItems.set(normalizeSortOrder(data.contactItems ?? [...MOCK_FOOTER_CONTACT]).map(ensureContactItem));
-        this.socialLinks.set(normalizeSortOrder(data.socialLinks ?? [...MOCK_FOOTER_SOCIAL]).map(ensureSocialLink));
-        this.techBadges.set(normalizeSortOrder(data.techBadges ?? [...MOCK_FOOTER_TECH_BADGES]).map(ensureTechBadge));
+        this.quickLinks.set(normalizeSortOrder(data.quickLinks ?? []).map(ensureQuickLink));
+        this.services.set(normalizeSortOrder(data.services ?? []).map(ensureService));
+        this.contactItems.set(normalizeSortOrder(data.contactItems ?? []).map(ensureContactItem));
+        this.socialLinks.set(normalizeSortOrder(data.socialLinks ?? []).map(ensureSocialLink));
+        this.techBadges.set(normalizeSortOrder(data.techBadges ?? []).map(ensureTechBadge));
       } else {
-        this.applyMockData();
-        this.persist();
+        this.applyEmptyState();
       }
     } catch {
-      this.applyMockData();
-      this.persist();
+      this.applyEmptyState();
     } finally {
       this.loading.set(false);
       this.loaded = true;
     }
   }
 
-  private applyMockData(): void {
-    this.brand.set({ ...DEFAULT_FOOTER_BRAND });
-    this.columnTitles.set({ ...DEFAULT_FOOTER_COLUMN_TITLES });
-    this.divider.set({ ...DEFAULT_FOOTER_DIVIDER });
-    this.tech.set({ ...DEFAULT_FOOTER_TECH });
-    this.bottom.set({ ...DEFAULT_FOOTER_BOTTOM });
-    this.quickLinks.set([...MOCK_FOOTER_QUICK_LINKS]);
-    this.services.set([...MOCK_FOOTER_SERVICES]);
-    this.contactItems.set([...MOCK_FOOTER_CONTACT]);
-    this.socialLinks.set([...MOCK_FOOTER_SOCIAL]);
-    this.techBadges.set([...MOCK_FOOTER_TECH_BADGES]);
+  private applyEmptyState(): void {
+    this.brand.set({ type: FOOTER_SECTION_TYPE_CODE, logoIcon: '', logoText: '', logoAccent: '', description: '' });
+    this.columnTitles.set({ type: FOOTER_SECTION_TYPE_CODE, quickLinksTitle: '', servicesTitle: '', contactTitle: '' });
+    this.divider.set({ type: FOOTER_SECTION_TYPE_CODE, icon: '', isActive: false });
+    this.tech.set({ type: FOOTER_SECTION_TYPE_CODE, label: '' });
+    this.bottom.set({ type: FOOTER_SECTION_TYPE_CODE, copyrightTemplate: '', madeWithText: '', showBackToTop: false, backToTopThreshold: 300 });
+    this.quickLinks.set([]);
+    this.services.set([]);
+    this.contactItems.set([]);
+    this.socialLinks.set([]);
+    this.techBadges.set([]);
   }
 
   private persist(): void {

@@ -98,9 +98,16 @@ export class FeaturedProjectsComponent implements OnInit {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
 
   ngOnInit(): void {
-    this.store.load();
-    this.sectionForm = { ...this.store.section() };
-    setTimeout(() => this.isReady.set(true), 100);
+    this.store.loadAdmin().subscribe({
+      next: () => {
+        this.sectionForm = { ...this.store.section() };
+        this.isReady.set(true);
+      },
+      error: () => {
+        this.sectionForm = { ...this.store.section() };
+        this.isReady.set(true);
+      },
+    });
   }
 
   setTab(tab: FeaturedProjectsTab): void {
@@ -109,8 +116,10 @@ export class FeaturedProjectsComponent implements OnInit {
   }
 
   saveSection(): void {
-    this.store.saveSection(this.sectionForm);
-    this.notify.success('FEATURED PROJECTS section config saved.');
+    this.store.saveSection(this.sectionForm).subscribe({
+      next: () => this.notify.success('FEATURED PROJECTS section config saved.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to save section config.'),
+    });
   }
 
   openAdd(entity: EntityType): void {
@@ -138,44 +147,48 @@ export class FeaturedProjectsComponent implements OnInit {
     const id = this.editingId();
     const mode = this.dialogMode();
 
+    let request$: ReturnType<FeaturedProjectsStore['addFilter']> | null = null;
+
     if (entity === 'filters') {
       if (!this.filterForm.key.trim()) { this.notify.warning('Please enter filter key.'); return; }
       if (!this.filterForm.label.trim()) { this.notify.warning('Please enter display name.'); return; }
       if (this.filterForm.sortOrder < 1) { this.notify.warning('Display order must be >= 1.'); return; }
-      if (mode === 'add') {
-        this.store.addFilter(this.filterForm);
-        if (!this.formIsActive) {
-          const added = this.store.filters().at(-1);
-          if (added) this.store.setFilterStatus(added.id, false);
-        }
-      } else if (id) {
-        this.store.updateFilter(id, this.filterForm);
-        this.store.setFilterStatus(id, this.formIsActive);
-      }
+      request$ =
+        mode === 'add'
+          ? this.store.addFilter(this.filterForm, this.formIsActive)
+          : id
+            ? this.store.updateFilter(id, this.filterForm, this.formIsActive)
+            : null;
     } else if (entity === 'projects') {
       if (!this.projectForm.name.trim()) { this.notify.warning('Please enter project name.'); return; }
       if (!this.projectForm.description.trim()) { this.notify.warning('Please enter short description.'); return; }
       if (this.projectForm.sortOrder < 1) { this.notify.warning('Display order must be >= 1.'); return; }
-      if (mode === 'add') {
-        this.store.addProject(this.projectForm);
-        if (!this.formIsActive) {
-          const added = this.store.projects().at(-1);
-          if (added) this.store.setProjectStatus(added.id, false);
-        }
-      } else if (id) {
-        this.store.updateProject(id, this.projectForm);
-        this.store.setProjectStatus(id, this.formIsActive);
-      }
+      request$ =
+        mode === 'add'
+          ? this.store.addProject(this.projectForm, this.formIsActive)
+          : id
+            ? this.store.updateProject(id, this.projectForm, this.formIsActive)
+            : null;
     }
 
-    this.notify.success(mode === 'add' ? 'Added successfully.' : 'Updated successfully.');
-    this.closeDialog();
+    if (!request$) return;
+
+    request$.subscribe({
+      next: () => {
+        this.notify.success(mode === 'add' ? 'Added successfully.' : 'Updated successfully.');
+        this.closeDialog();
+      },
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Request failed.'),
+    });
   }
 
   deleteItem(entity: EntityType, id: string): void {
-    if (entity === 'filters' && id === 'all') {
-      this.notify.warning('Cannot delete the "All" filter.');
-      return;
+    if (entity === 'filters') {
+      const filter = this.store.filters().find(f => f.id === id);
+      if (filter?.key === 'all') {
+        this.notify.warning('Cannot delete the "All" filter.');
+        return;
+      }
     }
     this.pendingDelete = { entity, id };
     this.confirmConfig.set({
@@ -191,11 +204,18 @@ export class FeaturedProjectsComponent implements OnInit {
 
   onConfirmDelete(): void {
     if (!this.pendingDelete) return;
+
     const { entity, id } = this.pendingDelete;
-    if (entity === 'filters') this.store.deleteFilter(id);
-    else this.store.deleteProject(id);
-    this.notify.success('Deleted successfully.');
-    this.closeConfirm();
+    const request$ =
+      entity === 'filters' ? this.store.deleteFilter(id) : this.store.deleteProject(id);
+
+    request$.subscribe({
+      next: () => {
+        this.notify.success('Deleted successfully.');
+        this.closeConfirm();
+      },
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Delete failed.'),
+    });
   }
 
   closeConfirm(): void {
@@ -205,18 +225,24 @@ export class FeaturedProjectsComponent implements OnInit {
   }
 
   setFilterStatus(id: string, isActive: boolean): void {
-    this.store.setFilterStatus(id, isActive);
-    this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.');
+    this.store.setFilterStatus(id, isActive).subscribe({
+      next: () => this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to update status.'),
+    });
   }
 
   setProjectStatus(id: string, isActive: boolean): void {
-    this.store.setProjectStatus(id, isActive);
-    this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.');
+    this.store.setProjectStatus(id, isActive).subscribe({
+      next: () => this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to update status.'),
+    });
   }
 
   toggleFeatured(id: string, isFeatured: boolean): void {
-    this.store.setProjectFeatured(id, isFeatured);
-    this.notify.info(isFeatured ? 'Marked as Featured.' : 'Unmarked as Featured.');
+    this.store.setProjectFeatured(id, isFeatured).subscribe({
+      next: () => this.notify.info(isFeatured ? 'Marked as Featured.' : 'Unmarked as Featured.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to update featured.'),
+    });
   }
 
   getStatusLabel(status: FeaturedProjectStatus): string {

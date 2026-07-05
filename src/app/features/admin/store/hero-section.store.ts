@@ -14,11 +14,6 @@ import {
   HeroTypingLine,
   HeroTypingFormData,
   HERO_SECTION_TYPE_CODE,
-  DEFAULT_HERO_SECTION,
-  DEFAULT_HERO_AVATAR,
-  DEFAULT_HERO_BUTTONS,
-  MOCK_HERO_TYPING_LINES,
-  MOCK_HERO_SOCIAL_LINKS,
 } from '../models/hero-section.model';
 import { HeroPublicAggregate, HeroSectionService } from '../services/hero-section.service';
 import { PlatformService } from '../../../core/services/platform.service';
@@ -51,16 +46,40 @@ function normalizeSortOrder<T extends { sortOrder?: number }>(items: T[]): (T & 
   return items.map((item, index) => ({ ...item, sortOrder: item.sortOrder ?? index + 1 }));
 }
 
+function emptyHeroSection(): HeroSectionConfig {
+  return { type: HERO_SECTION_TYPE_CODE, greeting: '', nameText: '', nameAccent: '', description: '', typingPrefix: '' };
+}
+
+function emptyHeroAvatar(): HeroAvatarConfig {
+  return { type: HERO_SECTION_TYPE_CODE, imageUrl: '', alt: '', fallbackInitials: '', isActive: false };
+}
+
+function emptyHeroButtons(): HeroButtonsConfig {
+  return {
+    type: HERO_SECTION_TYPE_CODE,
+    contactLabel: '',
+    contactScrollTarget: '',
+    contactVariant: 'outline',
+    contactBorderBeam: 'cw',
+    contactEnabled: false,
+    cvLabel: '',
+    cvUrl: '',
+    cvVariant: 'glow',
+    cvBorderBeam: 'contour',
+    cvEnabled: false,
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class HeroSectionStore {
   private readonly heroService = inject(HeroSectionService);
   private readonly platform = inject(PlatformService);
 
-  readonly section = signal<HeroSectionConfig>({ ...DEFAULT_HERO_SECTION });
-  readonly avatar = signal<HeroAvatarConfig>({ ...DEFAULT_HERO_AVATAR });
-  readonly buttons = signal<HeroButtonsConfig>({ ...DEFAULT_HERO_BUTTONS });
-  readonly typingLines = signal<HeroTypingLine[]>([...MOCK_HERO_TYPING_LINES]);
-  readonly socialLinks = signal<HeroSocialLink[]>([...MOCK_HERO_SOCIAL_LINKS]);
+  readonly section = signal<HeroSectionConfig>(emptyHeroSection());
+  readonly avatar = signal<HeroAvatarConfig>(emptyHeroAvatar());
+  readonly buttons = signal<HeroButtonsConfig>(emptyHeroButtons());
+  readonly typingLines = signal<HeroTypingLine[]>([]);
+  readonly socialLinks = signal<HeroSocialLink[]>([]);
   readonly sectionType = HERO_SECTION_TYPE_CODE;
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -95,7 +114,7 @@ export class HeroSectionStore {
     if (this.publicLoaded) return;
 
     if (!this.platform.isBrowser) {
-      this.applyDefaults();
+      this.applyEmptyState();
       this.publicLoaded = true;
       return;
     }
@@ -110,7 +129,7 @@ export class HeroSectionStore {
         this.loading.set(false);
       },
       error: () => {
-        this.applyDefaults();
+        this.applyEmptyState();
         this.loading.set(false);
       },
     });
@@ -121,7 +140,7 @@ export class HeroSectionStore {
     if (this.adminLoaded) return;
 
     if (!this.platform.isBrowser) {
-      this.applyDefaults();
+      this.applyEmptyState();
       this.adminLoaded = true;
       return;
     }
@@ -154,7 +173,7 @@ export class HeroSectionStore {
         this.loading.set(false);
       },
       error: () => {
-        this.applyDefaults();
+        this.applyEmptyState();
         this.loading.set(false);
       },
     });
@@ -371,11 +390,11 @@ export class HeroSectionStore {
     }
   }
 
-  private applyDefaults(): void {
-    this.section.set({ ...DEFAULT_HERO_SECTION });
-    this.avatar.set({ ...DEFAULT_HERO_AVATAR });
-    this.buttons.set({ ...DEFAULT_HERO_BUTTONS });
-    this.typingLines.set([...MOCK_HERO_TYPING_LINES]);
-    this.socialLinks.set([...MOCK_HERO_SOCIAL_LINKS]);
+  private applyEmptyState(): void {
+    this.section.set(emptyHeroSection());
+    this.avatar.set(emptyHeroAvatar());
+    this.buttons.set(emptyHeroButtons());
+    this.typingLines.set([]);
+    this.socialLinks.set([]);
   }
 }

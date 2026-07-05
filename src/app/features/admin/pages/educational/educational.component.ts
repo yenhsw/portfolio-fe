@@ -82,9 +82,16 @@ export class EducationalComponent implements OnInit {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.657 2.686 3 6 3s6-1.343 6-3v-5"/></svg>';
 
   ngOnInit(): void {
-    this.store.load();
-    this.sectionForm = { ...this.store.section() };
-    setTimeout(() => this.isReady.set(true), 100);
+    this.store.loadAdmin().subscribe({
+      next: () => {
+        this.sectionForm = { ...this.store.section() };
+        this.isReady.set(true);
+      },
+      error: () => {
+        this.sectionForm = { ...this.store.section() };
+        this.isReady.set(true);
+      },
+    });
   }
 
   setTab(tab: EducationalTab): void {
@@ -95,8 +102,10 @@ export class EducationalComponent implements OnInit {
   }
 
   saveSection(): void {
-    this.store.saveSection(this.sectionForm);
-    this.notify.success('EDUCATIONAL section config saved.');
+    this.store.saveSection(this.sectionForm).subscribe({
+      next: () => this.notify.success('EDUCATIONAL section config saved.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to save section config.'),
+    });
   }
 
   // --- Dialog helpers ---
@@ -126,6 +135,8 @@ export class EducationalComponent implements OnInit {
     const id = this.editingId();
     const mode = this.dialogMode();
 
+    let request$: ReturnType<EducationalStore['addHighlight']> | null = null;
+
     if (entity === 'highlights') {
       if (!this.highlightForm.label.trim()) {
         this.notify.warning('Please enter item name.');
@@ -135,35 +146,31 @@ export class EducationalComponent implements OnInit {
         this.notify.warning('Display order must be >= 1.');
         return;
       }
-      if (mode === 'add') {
-        this.store.addHighlight(this.highlightForm);
-        if (!this.formIsActive) {
-          const added = this.store.highlights().at(-1);
-          if (added) this.store.setHighlightStatus(added.id, false);
-        }
-      } else if (id) {
-        this.store.updateHighlight(id, this.highlightForm);
-        this.store.setHighlightStatus(id, this.formIsActive);
-      }
+      request$ =
+        mode === 'add'
+          ? this.store.addHighlight(this.highlightForm, this.formIsActive)
+          : id
+            ? this.store.updateHighlight(id, this.highlightForm, this.formIsActive)
+            : null;
     } else if (entity === 'timeline') {
       if (!this.timelineForm.institutionName.trim()) {
         this.notify.warning('Please enter school / center name.');
+        return;
+      }
+      if (this.timelineForm.technologies.length === 0) {
+        this.notify.warning('Please add at least one technology.');
         return;
       }
       if (this.timelineForm.sortOrder < 1) {
         this.notify.warning('Display order must be >= 1.');
         return;
       }
-      if (mode === 'add') {
-        this.store.addTimelineItem(this.timelineForm);
-        if (!this.formIsActive) {
-          const added = this.store.timeline().at(-1);
-          if (added) this.store.setTimelineStatus(added.id, false);
-        }
-      } else if (id) {
-        this.store.updateTimelineItem(id, this.timelineForm);
-        this.store.setTimelineStatus(id, this.formIsActive);
-      }
+      request$ =
+        mode === 'add'
+          ? this.store.addTimelineItem(this.timelineForm, this.formIsActive)
+          : id
+            ? this.store.updateTimelineItem(id, this.timelineForm, this.formIsActive)
+            : null;
     } else if (entity === 'certificates') {
       if (!this.certificateForm.name.trim()) {
         this.notify.warning('Please enter certificate name.');
@@ -173,16 +180,12 @@ export class EducationalComponent implements OnInit {
         this.notify.warning('Display order must be >= 1.');
         return;
       }
-      if (mode === 'add') {
-        this.store.addCertificate(this.certificateForm);
-        if (!this.formIsActive) {
-          const added = this.store.certificates().at(-1);
-          if (added) this.store.setCertificateStatus(added.id, false);
-        }
-      } else if (id) {
-        this.store.updateCertificate(id, this.certificateForm);
-        this.store.setCertificateStatus(id, this.formIsActive);
-      }
+      request$ =
+        mode === 'add'
+          ? this.store.addCertificate(this.certificateForm, this.formIsActive)
+          : id
+            ? this.store.updateCertificate(id, this.certificateForm, this.formIsActive)
+            : null;
     } else if (entity === 'future-goals') {
       if (!this.futureGoalForm.title.trim()) {
         this.notify.warning('Please enter goal name.');
@@ -192,20 +195,23 @@ export class EducationalComponent implements OnInit {
         this.notify.warning('Display order must be >= 1.');
         return;
       }
-      if (mode === 'add') {
-        this.store.addFutureGoal(this.futureGoalForm);
-        if (!this.formIsActive) {
-          const added = this.store.futureGoals().at(-1);
-          if (added) this.store.setFutureGoalStatus(added.id, false);
-        }
-      } else if (id) {
-        this.store.updateFutureGoal(id, this.futureGoalForm);
-        this.store.setFutureGoalStatus(id, this.formIsActive);
-      }
+      request$ =
+        mode === 'add'
+          ? this.store.addFutureGoal(this.futureGoalForm, this.formIsActive)
+          : id
+            ? this.store.updateFutureGoal(id, this.futureGoalForm, this.formIsActive)
+            : null;
     }
 
-    this.notify.success(mode === 'add' ? 'Added successfully.' : 'Updated successfully.');
-    this.closeDialog();
+    if (!request$) return;
+
+    request$.subscribe({
+      next: () => {
+        this.notify.success(mode === 'add' ? 'Added successfully.' : 'Updated successfully.');
+        this.closeDialog();
+      },
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Request failed.'),
+    });
   }
 
   deleteItem(entity: EntityType, id: string): void {
@@ -231,14 +237,22 @@ export class EducationalComponent implements OnInit {
     if (!this.pendingDelete) return;
 
     const { entity, id } = this.pendingDelete;
-    switch (entity) {
-      case 'highlights': this.store.deleteHighlight(id); break;
-      case 'timeline': this.store.deleteTimelineItem(id); break;
-      case 'certificates': this.store.deleteCertificate(id); break;
-      case 'future-goals': this.store.deleteFutureGoal(id); break;
-    }
-    this.notify.success('Deleted successfully.');
-    this.closeConfirm();
+    const request$ = (() => {
+      switch (entity) {
+        case 'highlights': return this.store.deleteHighlight(id);
+        case 'timeline': return this.store.deleteTimelineItem(id);
+        case 'certificates': return this.store.deleteCertificate(id);
+        case 'future-goals': return this.store.deleteFutureGoal(id);
+      }
+    })();
+
+    request$.subscribe({
+      next: () => {
+        this.notify.success('Deleted successfully.');
+        this.closeConfirm();
+      },
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Delete failed.'),
+    });
   }
 
   closeConfirm(): void {
@@ -248,22 +262,34 @@ export class EducationalComponent implements OnInit {
   }
 
   toggleStatus(entity: EntityType, id: string): void {
-    switch (entity) {
-      case 'highlights': this.store.toggleHighlightStatus(id); break;
-      case 'timeline': this.store.toggleTimelineStatus(id); break;
-      case 'certificates': this.store.toggleCertificateStatus(id); break;
-      case 'future-goals': this.store.toggleFutureGoalStatus(id); break;
-    }
+    const request$ = (() => {
+      switch (entity) {
+        case 'highlights': return this.store.toggleHighlightStatus(id);
+        case 'timeline': return this.store.toggleTimelineStatus(id);
+        case 'certificates': return this.store.toggleCertificateStatus(id);
+        case 'future-goals': return this.store.toggleFutureGoalStatus(id);
+      }
+    })();
+
+    request$.subscribe({
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to update status.'),
+    });
   }
 
   setStatus(entity: EntityType, id: string, isActive: boolean): void {
-    switch (entity) {
-      case 'highlights': this.store.setHighlightStatus(id, isActive); break;
-      case 'timeline': this.store.setTimelineStatus(id, isActive); break;
-      case 'certificates': this.store.setCertificateStatus(id, isActive); break;
-      case 'future-goals': this.store.setFutureGoalStatus(id, isActive); break;
-    }
-    this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.');
+    const request$ = (() => {
+      switch (entity) {
+        case 'highlights': return this.store.setHighlightStatus(id, isActive);
+        case 'timeline': return this.store.setTimelineStatus(id, isActive);
+        case 'certificates': return this.store.setCertificateStatus(id, isActive);
+        case 'future-goals': return this.store.setFutureGoalStatus(id, isActive);
+      }
+    })();
+
+    request$.subscribe({
+      next: () => this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to update status.'),
+    });
   }
 
   formIsActive = true;

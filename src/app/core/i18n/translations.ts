@@ -305,6 +305,10 @@ const EN: TranslationNode = {
             label: 'Map, CTA & Form',
             description: 'Map, bottom CTA, form settings',
           },
+          mail: {
+            label: 'Email config',
+            description: 'SMTP send + notification receive',
+          },
         },
         sectionPanel: 'Section Config — CONTACT',
         contactInfoPanel: 'Contact info',
@@ -717,6 +721,10 @@ const VI: TranslationNode = {
           settings: {
             label: 'Map, CTA & Form',
             description: 'Bản đồ, CTA cuối, cài đặt form',
+          },
+          mail: {
+            label: 'Cấu hình Email',
+            description: 'SMTP gửi + email nhận thông báo',
           },
         },
         sectionPanel: 'Cấu hình Section — CONTACT',

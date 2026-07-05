@@ -89,9 +89,16 @@ export class CareerJourneyComponent implements OnInit {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>';
 
   ngOnInit(): void {
-    this.store.load();
-    this.sectionForm = { ...this.store.section() };
-    setTimeout(() => this.isReady.set(true), 100);
+    this.store.loadAdmin().subscribe({
+      next: () => {
+        this.sectionForm = { ...this.store.section() };
+        this.isReady.set(true);
+      },
+      error: () => {
+        this.sectionForm = { ...this.store.section() };
+        this.isReady.set(true);
+      },
+    });
   }
 
   setTab(tab: CareerJourneyTab): void {
@@ -102,8 +109,10 @@ export class CareerJourneyComponent implements OnInit {
   }
 
   saveSection(): void {
-    this.store.saveSection(this.sectionForm);
-    this.notify.success('CAREER JOURNEY section config saved.');
+    this.store.saveSection(this.sectionForm).subscribe({
+      next: () => this.notify.success('CAREER JOURNEY section config saved.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to save section config.'),
+    });
   }
 
   openAdd(): void {
@@ -160,19 +169,22 @@ export class CareerJourneyComponent implements OnInit {
     const id = this.editingId();
     const mode = this.dialogMode();
 
-    if (mode === 'add') {
-      this.store.addExperience(this.experienceForm);
-      if (!this.formIsActive) {
-        const added = this.store.experiences().at(-1);
-        if (added) this.store.setExperienceStatus(added.id, false);
-      }
-    } else if (id) {
-      this.store.updateExperience(id, this.experienceForm);
-      this.store.setExperienceStatus(id, this.formIsActive);
-    }
+    const request$ =
+      mode === 'add'
+        ? this.store.addExperience(this.experienceForm, this.formIsActive)
+        : id
+          ? this.store.updateExperience(id, this.experienceForm, this.formIsActive)
+          : null;
 
-    this.notify.success(mode === 'add' ? 'Experience added.' : 'Experience updated.');
-    this.closeDialog();
+    if (!request$) return;
+
+    request$.subscribe({
+      next: () => {
+        this.notify.success(mode === 'add' ? 'Experience added.' : 'Experience updated.');
+        this.closeDialog();
+      },
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Request failed.'),
+    });
   }
 
   deleteItem(id: string): void {
@@ -189,11 +201,15 @@ export class CareerJourneyComponent implements OnInit {
   }
 
   onConfirmDelete(): void {
-    if (this.pendingDeleteId) {
-      this.store.deleteExperience(this.pendingDeleteId);
-      this.notify.success('Deleted successfully.');
-    }
-    this.closeConfirm();
+    if (!this.pendingDeleteId) return;
+
+    this.store.deleteExperience(this.pendingDeleteId).subscribe({
+      next: () => {
+        this.notify.success('Deleted successfully.');
+        this.closeConfirm();
+      },
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Delete failed.'),
+    });
   }
 
   closeConfirm(): void {
@@ -203,8 +219,10 @@ export class CareerJourneyComponent implements OnInit {
   }
 
   setStatus(id: string, isActive: boolean): void {
-    this.store.setExperienceStatus(id, isActive);
-    this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.');
+    this.store.setExperienceStatus(id, isActive).subscribe({
+      next: () => this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to update status.'),
+    });
   }
 
   dialogTitle(): string {

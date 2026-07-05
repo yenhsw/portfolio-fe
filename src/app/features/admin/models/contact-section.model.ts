@@ -85,15 +85,63 @@ export interface ContactSocialFormData {
   sortOrder: number;
 }
 
-export type ContactSectionTab = 'section' | 'contact-info' | 'social' | 'settings';
+/** SMTP gửi mail — GET response (không trả password) */
+export interface ContactMailSendConfig {
+  enabled: boolean;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUsername: string;
+  smtpPasswordConfigured: boolean;
+  fromEmail: string;
+  subjectPrefix: string;
+  defaultEncoding: string;
+  smtpAuth: boolean;
+  startTlsEnable: boolean;
+}
 
-export const CONTACT_SECTION_TAB_KEYS: ContactSectionTab[] = ['section', 'contact-info', 'social', 'settings'];
+/** SMTP gửi mail — PUT body (`smtpPassword` tùy chọn khi cập nhật) */
+export interface ContactMailSendFormData {
+  enabled: boolean;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUsername: string;
+  smtpPassword: string;
+  fromEmail: string;
+  subjectPrefix: string;
+  defaultEncoding: string;
+  smtpAuth: boolean;
+  startTlsEnable: boolean;
+}
+
+/** Email nhận thông báo contact — theo type */
+export interface ContactMailReceiveConfig {
+  type: typeof CONTACT_SECTION_TYPE;
+  notificationEmail: string;
+}
+
+export interface ContactSubmitRequest {
+  fullName: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+}
+
+export interface ContactSubmitResponse {
+  id: string;
+  createdAt: string;
+}
+
+export type ContactSectionTab = 'section' | 'contact-info' | 'social' | 'settings' | 'mail';
+
+export const CONTACT_SECTION_TAB_KEYS: ContactSectionTab[] = ['section', 'contact-info', 'social', 'settings', 'mail'];
 
 export const CONTACT_SECTION_TABS: { key: ContactSectionTab; label: string; description: string }[] = [
   { key: 'section', label: 'Section Config', description: 'Tag, LET\'S BUILD heading' },
   { key: 'contact-info', label: 'Contact info', description: 'Email, Phone, Location...' },
   { key: 'social', label: 'Social links', description: 'GitHub, LinkedIn, Facebook...' },
   { key: 'settings', label: 'Map, CTA & Form', description: 'Map, bottom CTA, form settings' },
+  { key: 'mail', label: 'Email config', description: 'SMTP send + notification receive' },
 ];
 
 const SVG_EMAIL =
@@ -148,6 +196,24 @@ export const DEFAULT_CONTACT_FORM: ContactFormSettings = {
   enabled: true,
   messageMaxLength: 500,
   successMessage: 'Your message has been sent successfully!',
+};
+
+export const DEFAULT_CONTACT_MAIL_SEND: ContactMailSendConfig = {
+  enabled: false,
+  smtpHost: 'smtp.gmail.com',
+  smtpPort: 587,
+  smtpUsername: '',
+  smtpPasswordConfigured: false,
+  fromEmail: '',
+  subjectPrefix: '[Portfolio Contact]',
+  defaultEncoding: 'UTF-8',
+  smtpAuth: true,
+  startTlsEnable: true,
+};
+
+export const DEFAULT_CONTACT_MAIL_RECEIVE: ContactMailReceiveConfig = {
+  type: CONTACT_SECTION_TYPE,
+  notificationEmail: '',
 };
 
 export const MOCK_CONTACT_INFO: ContactInfoItem[] = [

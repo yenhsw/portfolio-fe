@@ -144,18 +144,38 @@ export class ContactComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const maxLen = this.formSettings().messageMaxLength;
+    if (this.formData.message.length > maxLen) {
+      this.notify.warning(`Tin nhắn tối đa ${maxLen} ký tự.`);
+      return;
+    }
+
     this.isSubmitting.set(true);
 
-    setTimeout(() => {
-      this.isSubmitting.set(false);
-      this.formData = {
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: '',
-      };
-      this.notify.success(this.formSettings().successMessage);
-    }, 2000);
+    this.store
+      .submitContact({
+        fullName: this.formData.name.trim(),
+        email: this.formData.email.trim(),
+        phone: this.formData.phone.trim() || undefined,
+        subject: this.formData.subject.trim(),
+        message: this.formData.message.trim(),
+      })
+      .subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          this.formData = {
+            name: '',
+            email: '',
+            phone: '',
+            subject: '',
+            message: '',
+          };
+          this.notify.success(this.formSettings().successMessage);
+        },
+        error: (err: { message?: string }) => {
+          this.isSubmitting.set(false);
+          this.notify.error(err.message || 'Gửi tin nhắn thất bại. Vui lòng thử lại.');
+        },
+      });
   }
 }

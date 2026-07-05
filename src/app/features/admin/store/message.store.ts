@@ -3,8 +3,10 @@
 // Messages Management State with Signals
 // ============================================================
 
-import { Injectable, signal, computed } from '@angular/core';
-import { Message, MessageFolder, MessageFormData, MOCK_MESSAGES } from '../models/message.model';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { Message, MessageFolder } from '../models/message.model';
+import { MessageService } from '../services/message.service';
+import { PlatformService } from '../../../core/services/platform.service';
 
 export interface MessageState {
   messages: Message[];
@@ -23,6 +25,9 @@ export interface MessageState {
   providedIn: 'root',
 })
 export class MessageStore {
+  private readonly messageService = inject(MessageService);
+  private readonly platform = inject(PlatformService);
+
   // State
   readonly messages = signal<Message[]>([]);
   readonly loading = signal(false);
@@ -116,71 +121,112 @@ export class MessageStore {
 
   // Actions
   loadMessages(): void {
+    if (!this.platform.isBrowser) {
+      this.messages.set([]);
+      return;
+    }
+
     this.loading.set(true);
     this.error.set(null);
 
-    setTimeout(() => {
-      this.messages.set([...MOCK_MESSAGES]);
-      this.loading.set(false);
-    }, 500);
+    this.messageService.getMessages().subscribe({
+      next: items => {
+        this.messages.set(items);
+        this.loading.set(false);
+      },
+      error: (err: { message?: string }) => {
+        this.messages.set([]);
+        this.error.set(err.message || 'Failed to load messages');
+        this.loading.set(false);
+      },
+    });
   }
 
-  getMessageById(id: string): Message | undefined {
-    return this.messages().find(m => m.id === id);
+  private upsertMessage(updated: Message): void {
+    this.messages.update(msgs => {
+      const next = msgs.some(m => m.id === updated.id)
+        ? msgs.map(m => (m.id === updated.id ? updated : m))
+        : [...msgs, updated];
+      return next;
+    });
+    if (this.selectedMessage()?.id === updated.id) {
+      this.selectedMessage.set(updated);
+    }
   }
 
   markAsRead(id: string): void {
-    this.messages.update(msgs =>
-      msgs.map(m =>
-        m.id === id ? { ...m, isRead: true, status: 'read' as const, updatedAt: new Date().toISOString() } : m
-      )
-    );
+    this.messageService.patchRead(id, true).subscribe({
+      next: msg => this.upsertMessage(msg),
+      error: () => this.messages.update(msgs =>
+        msgs.map(m =>
+          m.id === id ? { ...m, isRead: true, status: 'read' as const, updatedAt: new Date().toISOString() } : m
+        )
+      ),
+    });
   }
 
   markAsUnread(id: string): void {
-    this.messages.update(msgs =>
-      msgs.map(m =>
-        m.id === id ? { ...m, isRead: false, updatedAt: new Date().toISOString() } : m
-      )
-    );
+    this.messageService.patchRead(id, false).subscribe({
+      next: msg => this.upsertMessage(msg),
+      error: () => this.messages.update(msgs =>
+        msgs.map(m =>
+          m.id === id ? { ...m, isRead: false, updatedAt: new Date().toISOString() } : m
+        )
+      ),
+    });
   }
 
   toggleStar(id: string): void {
-    this.messages.update(msgs =>
-      msgs.map(m =>
-        m.id === id ? { ...m, isStarred: !m.isStarred } : m
-      )
-    );
+    const item = this.messages().find(m => m.id === id);
+    if (!item) return;
+    const nextStarred = !item.isStarred;
+    this.messageService.patchStar(id, nextStarred).subscribe({
+      next: msg => this.upsertMessage(msg),
+      error: () => this.messages.update(msgs =>
+        msgs.map(m => (m.id === id ? { ...m, isStarred: nextStarred } : m))
+      ),
+    });
   }
 
   archiveMessage(id: string): void {
-    this.messages.update(msgs =>
-      msgs.map(m =>
-        m.id === id ? { ...m, folder: 'archived' as const, updatedAt: new Date().toISOString() } : m
-      )
-    );
-    if (this.selectedMessage()?.id === id) {
-      this.selectedMessage.update(m => m ? { ...m, folder: 'archived' } : null);
-    }
+    this.messageService.archiveMessage(id).subscribe({
+      next: msg => {
+        this.upsertMessage(msg);
+        if (this.selectedMessage()?.id === id) {
+          this.selectedMessage.update(m => (m ? { ...m, folder: 'archived' } : null));
+        }
+      },
+      error: () => this.messages.update(msgs =>
+        msgs.map(m =>
+          m.id === id ? { ...m, folder: 'archived' as const, updatedAt: new Date().toISOString() } : m
+        )
+      ),
+    });
   }
 
   unarchiveMessage(id: string): void {
-    this.messages.update(msgs =>
-      msgs.map(m =>
-        m.id === id ? { ...m, folder: 'inbox' as const, updatedAt: new Date().toISOString() } : m
-      )
-    );
+    this.restoreMessage(id);
   }
 
   deleteMessage(id: string): void {
-    this.messages.update(msgs =>
-      msgs.map(m =>
-        m.id === id ? { ...m, folder: 'trash' as const, updatedAt: new Date().toISOString() } : m
-      )
-    );
-    if (this.selectedMessage()?.id === id) {
-      this.closeConversation();
-    }
+    this.messageService.deleteMessage(id).subscribe({
+      next: msg => {
+        this.upsertMessage(msg);
+        if (this.selectedMessage()?.id === id) {
+          this.closeConversation();
+        }
+      },
+      error: () => {
+        this.messages.update(msgs =>
+          msgs.map(m =>
+            m.id === id ? { ...m, folder: 'trash' as const, updatedAt: new Date().toISOString() } : m
+          )
+        );
+        if (this.selectedMessage()?.id === id) {
+          this.closeConversation();
+        }
+      },
+    });
   }
 
   permanentlyDeleteMessage(id: string): void {
@@ -207,11 +253,18 @@ export class MessageStore {
   }
 
   restoreMessage(id: string): void {
-    this.messages.update(msgs =>
-      msgs.map(m =>
-        m.id === id ? { ...m, folder: 'inbox' as const, status: 'read' as const, updatedAt: new Date().toISOString() } : m
-      )
-    );
+    this.messageService.restoreMessage(id).subscribe({
+      next: msg => this.upsertMessage(msg),
+      error: () => this.messages.update(msgs =>
+        msgs.map(m =>
+          m.id === id ? { ...m, folder: 'inbox' as const, status: 'read' as const, updatedAt: new Date().toISOString() } : m
+        )
+      ),
+    });
+  }
+
+  getMessageById(id: string): Message | undefined {
+    return this.messages().find(m => m.id === id);
   }
 
   sendReply(messageId: string, content: string): void {

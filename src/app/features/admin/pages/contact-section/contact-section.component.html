@@ -250,6 +250,85 @@
         </div>
       </div>
     }
+
+    @if (activeTab() === 'mail') {
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Email configuration</h3>
+            <p class="panel-desc">SMTP gửi mail + email nhận thông báo khi visitor submit form.</p>
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <div class="panel-header sub">
+            <h4>SMTP — Mail gửi</h4>
+            <app-admin-button variant="primary" (click)="saveMailSend()">Save SMTP</app-admin-button>
+          </div>
+          @if (store.mailSend().smtpPasswordConfigured) {
+            <p class="field-hint">App password đã cấu hình. Để trống mật khẩu khi cập nhật để giữ mật khẩu cũ.</p>
+          }
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="mailSendForm.enabled" />
+                Bật gửi email thông báo
+              </label>
+            </div>
+            <div class="form-field">
+              <label>SMTP Host</label>
+              <input type="text" class="field-input" [(ngModel)]="mailSendForm.smtpHost" placeholder="smtp.gmail.com" />
+            </div>
+            <div class="form-field">
+              <label>SMTP Port</label>
+              <input type="number" class="field-input" [(ngModel)]="mailSendForm.smtpPort" min="1" max="65535" />
+            </div>
+            <div class="form-field">
+              <label>SMTP Username</label>
+              <input type="email" class="field-input" [(ngModel)]="mailSendForm.smtpUsername" />
+            </div>
+            <div class="form-field">
+              <label>SMTP Password / App Password</label>
+              <input type="password" class="field-input" [(ngModel)]="mailSendForm.smtpPassword" placeholder="Để trống nếu giữ mật khẩu cũ" />
+            </div>
+            <div class="form-field">
+              <label>From Email</label>
+              <input type="email" class="field-input" [(ngModel)]="mailSendForm.fromEmail" />
+            </div>
+            <div class="form-field">
+              <label>Subject prefix</label>
+              <input type="text" class="field-input" [(ngModel)]="mailSendForm.subjectPrefix" placeholder="[Portfolio Contact]" />
+            </div>
+            <div class="form-field">
+              <label class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="mailSendForm.smtpAuth" />
+                SMTP Auth
+              </label>
+            </div>
+            <div class="form-field">
+              <label class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="mailSendForm.startTlsEnable" />
+                STARTTLS
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <div class="panel-header sub">
+            <h4>Mail nhận — type {{ sectionType }}</h4>
+            <app-admin-button variant="primary" (click)="saveMailReceive()">Save notification email</app-admin-button>
+          </div>
+          <div class="form-grid">
+            <div class="form-field full">
+              <label>Notification email</label>
+              <input type="email" class="field-input" [(ngModel)]="mailReceiveForm.notificationEmail" placeholder="admin@example.com" />
+              <p class="field-hint">Email nhận thông báo khi có tin nhắn mới từ form Home.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
   </div>
 
   <app-admin-confirm-dialog

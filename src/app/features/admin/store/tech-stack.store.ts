@@ -1,9 +1,10 @@
 // ============================================================
 // TECH STACK STORE
-// State quản lý section TECH STACK (mock localStorage)
+// State quản lý section TECH STACK — API backend
 // ============================================================
 
 import { Injectable, inject, signal, computed } from '@angular/core';
+import { forkJoin, Observable, catchError, finalize, map, of, switchMap, tap, throwError } from 'rxjs';
 import {
   TechStackSectionConfig,
   TechStackStatistic,
@@ -14,41 +15,49 @@ import {
   TechStackSkillFormData,
   PublicSkillCategory,
   SKILLS_SECTION_TYPE_CODE,
-  DEFAULT_TECH_STACK_SECTION,
-  MOCK_TECH_STACK_STATISTICS,
-  MOCK_TECH_STACK_CATEGORIES,
-  MOCK_TECH_STACK_SKILLS,
 } from '../models/tech-stack.model';
+import { SkillsPublicAggregate, TechStackService } from '../services/tech-stack.service';
 import { PlatformService } from '../../../core/services/platform.service';
-
-const STORAGE_KEY = 'portfolio_tech_stack_data';
-
-interface TechStackData {
-  type: typeof SKILLS_SECTION_TYPE_CODE;
-  section: TechStackSectionConfig;
-  statistics: TechStackStatistic[];
-  categories: TechStackCategory[];
-  skills: TechStackSkill[];
-}
 
 function ensureSkillsSection(config: TechStackSectionConfig): TechStackSectionConfig {
   return { ...config, type: SKILLS_SECTION_TYPE_CODE };
 }
 
-function ensureStatistic(item: TechStackStatistic): TechStackStatistic {
-  return { ...item, type: SKILLS_SECTION_TYPE_CODE };
+function ensureStatistic(item: Partial<TechStackStatistic> & Pick<TechStackStatistic, 'id'>): TechStackStatistic {
+  return {
+    ...item,
+    type: SKILLS_SECTION_TYPE_CODE,
+    valueNumber: item.valueNumber ?? 0,
+    valueSuffix: item.valueSuffix ?? '+',
+    label: item.label ?? '',
+    sortOrder: item.sortOrder ?? 1,
+    isActive: item.isActive ?? true,
+  };
 }
 
-function ensureCategory(item: TechStackCategory): TechStackCategory {
-  return { ...item, type: SKILLS_SECTION_TYPE_CODE };
+function ensureCategory(item: Partial<TechStackCategory> & Pick<TechStackCategory, 'id'>): TechStackCategory {
+  return {
+    ...item,
+    type: SKILLS_SECTION_TYPE_CODE,
+    name: item.name ?? '',
+    icon: item.icon ?? '🎨',
+    color: item.color ?? '#00f5ff',
+    sortOrder: item.sortOrder ?? 1,
+    isActive: item.isActive ?? true,
+  };
 }
 
-function ensureSkill(item: TechStackSkill): TechStackSkill {
-  return { ...item, type: SKILLS_SECTION_TYPE_CODE };
-}
-
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+function ensureSkill(item: Partial<TechStackSkill> & Pick<TechStackSkill, 'id'>): TechStackSkill {
+  return {
+    ...item,
+    type: SKILLS_SECTION_TYPE_CODE,
+    categoryId: item.categoryId ?? '',
+    name: item.name ?? '',
+    logo: item.logo ?? '',
+    level: item.level ?? 0,
+    sortOrder: item.sortOrder ?? 1,
+    isActive: item.isActive ?? true,
+  };
 }
 
 function sortByOrder<T extends { sortOrder: number }>(items: T[]): T[] {
@@ -59,23 +68,25 @@ function normalizeSortOrder<T extends { sortOrder?: number }>(items: T[]): (T & 
   return items.map((item, index) => ({ ...item, sortOrder: item.sortOrder ?? index + 1 }));
 }
 
-function nextSortOrder(items: { sortOrder: number }[]): number {
-  if (items.length === 0) return 1;
-  return Math.max(...items.map(i => i.sortOrder)) + 1;
+function emptyTechStackSection(): TechStackSectionConfig {
+  return { type: SKILLS_SECTION_TYPE_CODE, sectionTag: '', titleAccent: '', titleText: '', subtitle: '' };
 }
 
 @Injectable({ providedIn: 'root' })
 export class TechStackStore {
+  private readonly techStackService = inject(TechStackService);
   private readonly platform = inject(PlatformService);
 
-  readonly section = signal<TechStackSectionConfig>({ ...DEFAULT_TECH_STACK_SECTION });
-  readonly statistics = signal<TechStackStatistic[]>([...MOCK_TECH_STACK_STATISTICS]);
-  readonly categories = signal<TechStackCategory[]>([...MOCK_TECH_STACK_CATEGORIES]);
-  readonly skills = signal<TechStackSkill[]>([...MOCK_TECH_STACK_SKILLS]);
+  readonly section = signal<TechStackSectionConfig>(emptyTechStackSection());
+  readonly statistics = signal<TechStackStatistic[]>([]);
+  readonly categories = signal<TechStackCategory[]>([]);
+  readonly skills = signal<TechStackSkill[]>([]);
   readonly sectionType = SKILLS_SECTION_TYPE_CODE;
   readonly loading = signal(false);
   readonly saving = signal(false);
-  private loaded = false;
+
+  private publicLoaded = false;
+  private adminLoaded = false;
 
   readonly activeStatistics = computed(() =>
     sortByOrder(this.statistics().filter(s => s.isActive))
@@ -120,160 +131,340 @@ export class TechStackStore {
     return hasSectionText || this.activeStatistics().length > 0 || this.skillCategories().length > 0;
   });
 
+  /** Public Home — `GET /api/public/skills?type=1` */
   load(): void {
-    if (this.loaded) return;
+    if (this.publicLoaded) return;
 
     if (!this.platform.isBrowser) {
-      this.applyMockData();
-      this.loaded = true;
+      this.applyEmptyState();
+      this.publicLoaded = true;
       return;
     }
 
     this.loading.set(true);
-    try {
-      const storage = this.platform.localStorage;
-      const raw = storage?.getItem(STORAGE_KEY);
-      if (raw) {
-        const data = JSON.parse(raw) as TechStackData;
-        this.section.set(ensureSkillsSection(data.section ?? { ...DEFAULT_TECH_STACK_SECTION }));
-        this.statistics.set(normalizeSortOrder(data.statistics ?? [...MOCK_TECH_STACK_STATISTICS]).map(ensureStatistic));
-        this.categories.set(normalizeSortOrder(data.categories ?? [...MOCK_TECH_STACK_CATEGORIES]).map(ensureCategory));
-        this.skills.set(normalizeSortOrder(data.skills ?? [...MOCK_TECH_STACK_SKILLS]).map(ensureSkill));
-      } else {
-        this.applyMockData();
-        this.persist();
-      }
-    } catch {
-      this.applyMockData();
-      this.persist();
-    } finally {
-      this.loading.set(false);
-      this.loaded = true;
+    this.techStackService.getPublic().subscribe({
+      next: response => {
+        if (response.success && response.data) {
+          this.applyAggregate(response.data);
+          this.publicLoaded = true;
+        }
+        this.loading.set(false);
+      },
+      error: () => {
+        this.applyEmptyState();
+        this.loading.set(false);
+      },
+    });
+  }
+
+  /** Admin panel — parallel admin GET endpoints (Bearer JWT) */
+  loadAdmin(): Observable<void> {
+    if (this.adminLoaded) {
+      return of(void 0);
     }
-  }
 
-  private applyMockData(): void {
-    this.section.set({ ...DEFAULT_TECH_STACK_SECTION });
-    this.statistics.set([...MOCK_TECH_STACK_STATISTICS]);
-    this.categories.set([...MOCK_TECH_STACK_CATEGORIES]);
-    this.skills.set([...MOCK_TECH_STACK_SKILLS]);
-  }
+    if (!this.platform.isBrowser) {
+      this.applyEmptyState();
+      this.adminLoaded = true;
+      return of(void 0);
+    }
 
-  private persist(): void {
-    if (!this.platform.isBrowser) return;
-    const storage = this.platform.localStorage;
-    if (!storage) return;
-
-    const data: TechStackData = {
-      type: SKILLS_SECTION_TYPE_CODE,
-      section: this.section(),
-      statistics: this.statistics(),
-      categories: this.categories(),
-      skills: this.skills(),
-    };
-    storage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }
-
-  saveSection(config: TechStackSectionConfig): void {
-    this.section.set(ensureSkillsSection(config));
-    this.persist();
-  }
-
-  addStatistic(data: TechStackStatisticFormData): void {
-    const items = this.statistics();
-    const item: TechStackStatistic = ensureStatistic({
-      id: generateId(),
-      ...data,
-      sortOrder: data.sortOrder > 0 ? data.sortOrder : nextSortOrder(items),
-      isActive: true,
-    });
-    this.statistics.set([...items, item]);
-    this.persist();
-  }
-
-  updateStatistic(id: string, data: TechStackStatisticFormData): void {
-    this.statistics.update(items =>
-      items.map(s =>
-        s.id === id ? ensureStatistic({ ...s, ...data, type: SKILLS_SECTION_TYPE_CODE }) : s
-      )
+    this.loading.set(true);
+    return forkJoin({
+      section: this.techStackService.getSection(),
+      statistics: this.techStackService.getStatistics(),
+      categories: this.techStackService.getCategories(),
+      skills: this.techStackService.getSkills(),
+    }).pipe(
+      tap(({ section, statistics, categories, skills }) => {
+        if (section.success && section.data) {
+          this.section.set(ensureSkillsSection(section.data));
+        }
+        if (statistics.success && statistics.data) {
+          this.statistics.set(normalizeSortOrder(statistics.data).map(item => ensureStatistic(item)));
+        }
+        if (categories.success && categories.data) {
+          this.categories.set(normalizeSortOrder(categories.data).map(item => ensureCategory(item)));
+        }
+        if (skills.success && skills.data) {
+          this.skills.set(normalizeSortOrder(skills.data).map(item => ensureSkill(item)));
+        }
+        this.adminLoaded = true;
+      }),
+      map(() => void 0),
+      catchError(err => {
+        this.applyEmptyState();
+        return throwError(() => err);
+      }),
+      finalize(() => this.loading.set(false))
     );
-    this.persist();
   }
 
-  deleteStatistic(id: string): void {
-    this.statistics.update(items => items.filter(s => s.id !== id));
-    this.persist();
-  }
+  saveSection(config: TechStackSectionConfig): Observable<void> {
+    this.saving.set(true);
+    const payload = ensureSkillsSection(config);
 
-  setStatisticStatus(id: string, isActive: boolean): void {
-    this.statistics.update(items => items.map(s => (s.id === id ? { ...s, isActive } : s)));
-    this.persist();
-  }
-
-  addCategory(data: TechStackCategoryFormData): void {
-    const items = this.categories();
-    const item: TechStackCategory = ensureCategory({
-      id: generateId(),
-      ...data,
-      sortOrder: data.sortOrder > 0 ? data.sortOrder : nextSortOrder(items),
-      isActive: true,
-    });
-    this.categories.set([...items, item]);
-    this.persist();
-  }
-
-  updateCategory(id: string, data: TechStackCategoryFormData): void {
-    this.categories.update(items =>
-      items.map(c =>
-        c.id === id ? ensureCategory({ ...c, ...data, type: SKILLS_SECTION_TYPE_CODE }) : c
-      )
+    return this.techStackService.updateSection(payload).pipe(
+      tap(response => {
+        if (response.success && response.data) {
+          this.section.set(ensureSkillsSection(response.data));
+          this.publicLoaded = false;
+        }
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
     );
-    this.persist();
   }
 
-  deleteCategory(id: string): void {
-    this.categories.update(items => items.filter(c => c.id !== id));
-    this.skills.update(items => items.filter(s => s.categoryId !== id));
-    this.persist();
-  }
-
-  setCategoryStatus(id: string, isActive: boolean): void {
-    this.categories.update(items => items.map(c => (c.id === id ? { ...c, isActive } : c)));
-    this.persist();
-  }
-
-  addSkill(data: TechStackSkillFormData): void {
-    const items = this.skills();
-    const item: TechStackSkill = ensureSkill({
-      id: generateId(),
-      ...data,
-      sortOrder: data.sortOrder > 0 ? data.sortOrder : nextSortOrder(items.filter(s => s.categoryId === data.categoryId)),
-      isActive: true,
-    });
-    this.skills.set([...items, item]);
-    this.persist();
-  }
-
-  updateSkill(id: string, data: TechStackSkillFormData): void {
-    this.skills.update(items =>
-      items.map(s =>
-        s.id === id ? ensureSkill({ ...s, ...data, type: SKILLS_SECTION_TYPE_CODE }) : s
-      )
+  addStatistic(data: TechStackStatisticFormData, isActive = true): Observable<void> {
+    return this.createCollectionItem(
+      this.techStackService.createStatistic(data),
+      id => this.techStackService.setStatisticStatus(id, false),
+      isActive,
+      item => this.upsertStatistic(item)
     );
-    this.persist();
   }
 
-  deleteSkill(id: string): void {
-    this.skills.update(items => items.filter(s => s.id !== id));
-    this.persist();
+  updateStatistic(id: string, data: TechStackStatisticFormData, isActive: boolean): Observable<void> {
+    const current = this.statistics().find(s => s.id === id);
+    return this.updateCollectionItem(
+      this.techStackService.updateStatistic(id, data),
+      () => this.techStackService.setStatisticStatus(id, isActive),
+      item => this.upsertStatistic(item),
+      current?.isActive,
+      isActive
+    );
   }
 
-  setSkillStatus(id: string, isActive: boolean): void {
-    this.skills.update(items => items.map(s => (s.id === id ? { ...s, isActive } : s)));
-    this.persist();
+  deleteStatistic(id: string): Observable<void> {
+    return this.deleteCollectionItem(
+      this.techStackService.deleteStatistic(id),
+      () => this.statistics.update(items => items.filter(s => s.id !== id))
+    );
+  }
+
+  setStatisticStatus(id: string, isActive: boolean): Observable<void> {
+    return this.patchCollectionStatus(
+      this.techStackService.setStatisticStatus(id, isActive),
+      item => this.upsertStatistic(item)
+    );
+  }
+
+  addCategory(data: TechStackCategoryFormData, isActive = true): Observable<void> {
+    return this.createCollectionItem(
+      this.techStackService.createCategory(data),
+      id => this.techStackService.setCategoryStatus(id, false),
+      isActive,
+      item => this.upsertCategory(item)
+    );
+  }
+
+  updateCategory(id: string, data: TechStackCategoryFormData, isActive: boolean): Observable<void> {
+    const current = this.categories().find(c => c.id === id);
+    return this.updateCollectionItem(
+      this.techStackService.updateCategory(id, data),
+      () => this.techStackService.setCategoryStatus(id, isActive),
+      item => this.upsertCategory(item),
+      current?.isActive,
+      isActive
+    );
+  }
+
+  deleteCategory(id: string): Observable<void> {
+    return this.deleteCollectionItem(
+      this.techStackService.deleteCategory(id),
+      () => {
+        this.categories.update(items => items.filter(c => c.id !== id));
+        this.skills.update(items => items.filter(s => s.categoryId !== id));
+      }
+    );
+  }
+
+  setCategoryStatus(id: string, isActive: boolean): Observable<void> {
+    return this.patchCollectionStatus(
+      this.techStackService.setCategoryStatus(id, isActive),
+      item => this.upsertCategory(item)
+    );
+  }
+
+  addSkill(data: TechStackSkillFormData, isActive = true): Observable<void> {
+    return this.createCollectionItem(
+      this.techStackService.createSkill(data),
+      id => this.techStackService.setSkillStatus(id, false),
+      isActive,
+      item => this.upsertSkill(item)
+    );
+  }
+
+  updateSkill(id: string, data: TechStackSkillFormData, isActive: boolean): Observable<void> {
+    const current = this.skills().find(s => s.id === id);
+    return this.updateCollectionItem(
+      this.techStackService.updateSkill(id, data),
+      () => this.techStackService.setSkillStatus(id, isActive),
+      item => this.upsertSkill(item),
+      current?.isActive,
+      isActive
+    );
+  }
+
+  deleteSkill(id: string): Observable<void> {
+    return this.deleteCollectionItem(
+      this.techStackService.deleteSkill(id),
+      () => this.skills.update(items => items.filter(s => s.id !== id))
+    );
+  }
+
+  setSkillStatus(id: string, isActive: boolean): Observable<void> {
+    return this.patchCollectionStatus(
+      this.techStackService.setSkillStatus(id, isActive),
+      item => this.upsertSkill(item)
+    );
   }
 
   categoryName(id: string): string {
     return this.categories().find(c => c.id === id)?.name ?? id;
+  }
+
+  private createCollectionItem<T extends { id: string }>(
+    create$: Observable<{ success: boolean; data?: T; message?: string }>,
+    deactivate: (id: string) => Observable<{ success: boolean; data?: T; message?: string }>,
+    isActive: boolean,
+    upsert: (item: T) => void
+  ): Observable<void> {
+    this.saving.set(true);
+    return create$.pipe(
+      switchMap(response => {
+        if (!response.success || !response.data) {
+          return throwError(() => ({ message: response.message || 'Create failed' }));
+        }
+        if (!isActive) {
+          return deactivate(response.data.id);
+        }
+        return of(response);
+      }),
+      tap(response => {
+        if (response.success && response.data) {
+          upsert(response.data);
+          this.publicLoaded = false;
+        }
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  private updateCollectionItem<T extends { id: string; isActive: boolean }>(
+    update$: Observable<{ success: boolean; data?: T; message?: string }>,
+    patchStatus: () => Observable<{ success: boolean; data?: T; message?: string }>,
+    upsert: (item: T) => void,
+    currentIsActive?: boolean,
+    nextIsActive?: boolean
+  ): Observable<void> {
+    this.saving.set(true);
+    return update$.pipe(
+      switchMap(response => {
+        if (!response.success || !response.data) {
+          return throwError(() => ({ message: response.message || 'Update failed' }));
+        }
+        const statusChanged =
+          currentIsActive === undefined || nextIsActive === undefined || currentIsActive !== nextIsActive;
+        if (!statusChanged) {
+          return of(response);
+        }
+        return patchStatus();
+      }),
+      tap(response => {
+        if (response.success && response.data) {
+          upsert(response.data);
+          this.publicLoaded = false;
+        }
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  private deleteCollectionItem(
+    delete$: Observable<{ success: boolean; message?: string }>,
+    removeLocal: () => void
+  ): Observable<void> {
+    this.saving.set(true);
+    return delete$.pipe(
+      tap(() => {
+        removeLocal();
+        this.publicLoaded = false;
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  private patchCollectionStatus<T extends { id: string }>(
+    patch$: Observable<{ success: boolean; data?: T; message?: string }>,
+    upsert: (item: T) => void
+  ): Observable<void> {
+    this.saving.set(true);
+    return patch$.pipe(
+      tap(response => {
+        if (response.success && response.data) {
+          upsert(response.data);
+          this.publicLoaded = false;
+        }
+      }),
+      map(() => void 0),
+      finalize(() => this.saving.set(false))
+    );
+  }
+
+  private upsertStatistic(item: TechStackStatistic): void {
+    this.statistics.update(items => this.upsertSorted(items, ensureStatistic(item)));
+  }
+
+  private upsertCategory(item: TechStackCategory): void {
+    this.categories.update(items => this.upsertSorted(items, ensureCategory(item)));
+  }
+
+  private upsertSkill(item: TechStackSkill): void {
+    this.skills.update(items => this.upsertSorted(items, ensureSkill(item)));
+  }
+
+  private upsertSorted<T extends { id: string; sortOrder: number }>(items: T[], item: T): T[] {
+    const next = items.some(i => i.id === item.id)
+      ? items.map(i => (i.id === item.id ? item : i))
+      : [...items, item];
+    return sortByOrder(next);
+  }
+
+  private applyAggregate(data: SkillsPublicAggregate): void {
+    if (data.section) {
+      this.section.set(ensureSkillsSection(data.section));
+    }
+    if (data.statistics) {
+      this.statistics.set(normalizeSortOrder(data.statistics).map(item => ensureStatistic(item)));
+    }
+    if (data.categories) {
+      const categories: TechStackCategory[] = [];
+      const skills: TechStackSkill[] = [];
+
+      for (const cat of normalizeSortOrder(data.categories)) {
+        const { skills: nestedSkills, ...catData } = cat;
+        categories.push(ensureCategory(catData));
+        if (nestedSkills) {
+          for (const skill of nestedSkills) {
+            skills.push(ensureSkill({ ...skill, categoryId: cat.id }));
+          }
+        }
+      }
+
+      this.categories.set(categories);
+      this.skills.set(sortByOrder(skills));
+    }
+  }
+
+  private applyEmptyState(): void {
+    this.section.set(emptyTechStackSection());
+    this.statistics.set([]);
+    this.categories.set([]);
+    this.skills.set([]);
   }
 }

@@ -15,8 +15,11 @@ import {
   ContactFormSettings,
   ContactInfoFormData,
   ContactSocialFormData,
+  ContactMailSendFormData,
+  ContactMailReceiveConfig,
   CONTACT_SECTION_TYPE_CODE,
   CONTACT_SECTION_TYPE_LABEL,
+  DEFAULT_CONTACT_MAIL_SEND,
 } from '../../models/contact-section.model';
 import {
   AdminPageComponent,
@@ -67,6 +70,8 @@ export class ContactSectionComponent implements OnInit {
   mapForm: ContactMapConfig = { ...this.store.map() };
   ctaForm: ContactCtaConfig = { ...this.store.cta() };
   formSettings: ContactFormSettings = { ...this.store.form() };
+  mailSendForm: ContactMailSendFormData = this.emptyMailSendForm();
+  mailReceiveForm: ContactMailReceiveConfig = { ...this.store.mailReceive() };
   infoForm: ContactInfoFormData = this.emptyInfoForm();
   socialForm: ContactSocialFormData = this.emptySocialForm();
 
@@ -74,25 +79,62 @@ export class ContactSectionComponent implements OnInit {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>';
 
   ngOnInit(): void {
-    this.store.load();
-    this.resetPanelForms();
-    setTimeout(() => this.isReady.set(true), 100);
+    this.store.loadAdmin().subscribe({
+      next: () => {
+        this.resetPanelForms();
+        this.isReady.set(true);
+      },
+      error: () => {
+        this.resetPanelForms();
+        this.isReady.set(true);
+      },
+    });
   }
 
   setTab(tab: ContactSectionTab): void {
     this.activeTab.set(tab);
     if (tab === 'section') this.sectionForm = { ...this.store.section() };
-    if (tab === 'settings') this.resetPanelForms();
+    if (tab === 'settings' || tab === 'mail') this.resetPanelForms();
   }
 
   saveSection(): void {
-    this.store.saveSection(this.sectionForm);
-    this.notify.success('CONTACT section config saved.');
+    this.store.saveSection(this.sectionForm).subscribe({
+      next: () => this.notify.success('CONTACT section config saved.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to save section config.'),
+    });
   }
 
   saveSettings(): void {
-    this.store.saveSettingsPanel(this.mapForm, this.ctaForm, this.formSettings);
-    this.notify.success('Map, CTA, and Form config saved.');
+    this.store.saveSettingsPanel(this.mapForm, this.ctaForm, this.formSettings).subscribe({
+      next: () => this.notify.success('Map, CTA, and Form config saved.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to save settings.'),
+    });
+  }
+
+  saveMailSend(): void {
+    if (!this.mailSendForm.smtpHost.trim() || !this.mailSendForm.smtpUsername.trim()) {
+      this.notify.warning('Please enter SMTP host and username.');
+      return;
+    }
+    this.store.saveMailSend(this.mailSendForm).subscribe({
+      next: () => {
+        this.mailSendForm.smtpPassword = '';
+        this.resetMailSendForm();
+        this.notify.success('SMTP send config saved.');
+      },
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to save SMTP config.'),
+    });
+  }
+
+  saveMailReceive(): void {
+    if (!this.mailReceiveForm.notificationEmail.trim()) {
+      this.notify.warning('Please enter notification email.');
+      return;
+    }
+    this.store.saveMailReceive(this.mailReceiveForm).subscribe({
+      next: () => this.notify.success('Notification email saved.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to save notification email.'),
+    });
   }
 
   openAdd(entity: EntityType): void {
@@ -120,42 +162,43 @@ export class ContactSectionComponent implements OnInit {
     const id = this.editingId();
     const mode = this.dialogMode();
 
+    let request$: ReturnType<ContactSectionStore['addContactInfo']> | null = null;
+
     if (entity === 'contact-info') {
       if (!this.infoForm.label.trim() || !this.infoForm.value.trim()) {
         this.notify.warning('Please enter label and value.');
         return;
       }
       if (this.infoForm.sortOrder < 1) { this.notify.warning('Display order must be >= 1.'); return; }
-      if (mode === 'add') {
-        this.store.addContactInfo(this.infoForm);
-        if (!this.formIsActive) {
-          const added = this.store.contactInfo().at(-1);
-          if (added) this.store.setContactInfoStatus(added.id, false);
-        }
-      } else if (id) {
-        this.store.updateContactInfo(id, this.infoForm);
-        this.store.setContactInfoStatus(id, this.formIsActive);
-      }
+      request$ =
+        mode === 'add'
+          ? this.store.addContactInfo(this.infoForm, this.formIsActive)
+          : id
+            ? this.store.updateContactInfo(id, this.infoForm, this.formIsActive)
+            : null;
     } else {
       if (!this.socialForm.name.trim() || !this.socialForm.url.trim()) {
         this.notify.warning('Please enter name and URL.');
         return;
       }
       if (this.socialForm.sortOrder < 1) { this.notify.warning('Display order must be >= 1.'); return; }
-      if (mode === 'add') {
-        this.store.addSocialLink(this.socialForm);
-        if (!this.formIsActive) {
-          const added = this.store.socialLinks().at(-1);
-          if (added) this.store.setSocialLinkStatus(added.id, false);
-        }
-      } else if (id) {
-        this.store.updateSocialLink(id, this.socialForm);
-        this.store.setSocialLinkStatus(id, this.formIsActive);
-      }
+      request$ =
+        mode === 'add'
+          ? this.store.addSocialLink(this.socialForm, this.formIsActive)
+          : id
+            ? this.store.updateSocialLink(id, this.socialForm, this.formIsActive)
+            : null;
     }
 
-    this.notify.success(mode === 'add' ? 'Added successfully.' : 'Updated successfully.');
-    this.closeDialog();
+    if (!request$) return;
+
+    request$.subscribe({
+      next: () => {
+        this.notify.success(mode === 'add' ? 'Added successfully.' : 'Updated successfully.');
+        this.closeDialog();
+      },
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Request failed.'),
+    });
   }
 
   deleteItem(entity: EntityType, id: string): void {
@@ -173,11 +216,18 @@ export class ContactSectionComponent implements OnInit {
 
   onConfirmDelete(): void {
     if (!this.pendingDelete) return;
+
     const { entity, id } = this.pendingDelete;
-    if (entity === 'contact-info') this.store.deleteContactInfo(id);
-    else this.store.deleteSocialLink(id);
-    this.notify.success('Deleted successfully.');
-    this.closeConfirm();
+    const request$ =
+      entity === 'contact-info' ? this.store.deleteContactInfo(id) : this.store.deleteSocialLink(id);
+
+    request$.subscribe({
+      next: () => {
+        this.notify.success('Deleted successfully.');
+        this.closeConfirm();
+      },
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Delete failed.'),
+    });
   }
 
   closeConfirm(): void {
@@ -187,9 +237,15 @@ export class ContactSectionComponent implements OnInit {
   }
 
   setStatus(entity: EntityType, id: string, isActive: boolean): void {
-    if (entity === 'contact-info') this.store.setContactInfoStatus(id, isActive);
-    else this.store.setSocialLinkStatus(id, isActive);
-    this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.');
+    const request$ =
+      entity === 'contact-info'
+        ? this.store.setContactInfoStatus(id, isActive)
+        : this.store.setSocialLinkStatus(id, isActive);
+
+    request$.subscribe({
+      next: () => this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to update status.'),
+    });
   }
 
   dialogTitle(): string {
@@ -209,9 +265,43 @@ export class ContactSectionComponent implements OnInit {
   }
 
   private resetPanelForms(): void {
+    this.sectionForm = { ...this.store.section() };
     this.mapForm = { ...this.store.map() };
     this.ctaForm = { ...this.store.cta() };
     this.formSettings = { ...this.store.form() };
+    this.resetMailSendForm();
+    this.mailReceiveForm = { ...this.store.mailReceive() };
+  }
+
+  private resetMailSendForm(): void {
+    const current = this.store.mailSend();
+    this.mailSendForm = {
+      enabled: current.enabled,
+      smtpHost: current.smtpHost || DEFAULT_CONTACT_MAIL_SEND.smtpHost,
+      smtpPort: current.smtpPort || DEFAULT_CONTACT_MAIL_SEND.smtpPort,
+      smtpUsername: current.smtpUsername,
+      smtpPassword: '',
+      fromEmail: current.fromEmail,
+      subjectPrefix: current.subjectPrefix || DEFAULT_CONTACT_MAIL_SEND.subjectPrefix,
+      defaultEncoding: current.defaultEncoding || DEFAULT_CONTACT_MAIL_SEND.defaultEncoding,
+      smtpAuth: current.smtpAuth,
+      startTlsEnable: current.startTlsEnable,
+    };
+  }
+
+  private emptyMailSendForm(): ContactMailSendFormData {
+    return {
+      enabled: DEFAULT_CONTACT_MAIL_SEND.enabled,
+      smtpHost: DEFAULT_CONTACT_MAIL_SEND.smtpHost,
+      smtpPort: DEFAULT_CONTACT_MAIL_SEND.smtpPort,
+      smtpUsername: '',
+      smtpPassword: '',
+      fromEmail: '',
+      subjectPrefix: DEFAULT_CONTACT_MAIL_SEND.subjectPrefix,
+      defaultEncoding: DEFAULT_CONTACT_MAIL_SEND.defaultEncoding,
+      smtpAuth: DEFAULT_CONTACT_MAIL_SEND.smtpAuth,
+      startTlsEnable: DEFAULT_CONTACT_MAIL_SEND.startTlsEnable,
+    };
   }
 
   private emptyInfoForm(): ContactInfoFormData {

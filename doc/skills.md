@@ -9,10 +9,11 @@ Tài liệu chuẩn để **Backend implement API** và **Frontend map dữ li�
 | Public component | `SkillsComponent` |
 | Admin route | `/admin/tech-stack` |
 | Model | `src/app/features/admin/models/tech-stack.model.ts` |
-| Store (mock) | `src/app/features/admin/store/tech-stack.store.ts` |
+| Service | `src/app/features/admin/services/tech-stack.service.ts` |
+| Store | `src/app/features/admin/store/tech-stack.store.ts` |
 | Type constant | `section-type.constants.ts` → `SECTION_API_TYPE = 1` |
 | API constants | `SKILLS_*` (`/api/admin/skills/*?type=1`) |
-| localStorage key (mock) | `portfolio_tech_stack_data` |
+| Backend doc | `portfolio-api/doc/skills.md` |
 
 > **Phân biệt section:** Hero `/api/admin/hero`, Educational `/api/admin/educational`, Experience `/api/admin/experience`, Skills `/api/admin/skills`. Cả bốn đều `type: 1`.
 
@@ -268,21 +269,28 @@ Constants FE:
 
 ## Ghi chú triển khai FE
 
-- Store mock: `portfolio_tech_stack_data` — mọi entity có `type: 1`
+- **`TechStackService`** — gọi HTTP theo `portfolio-api/doc/skills.md`
+- **`TechStackStore.load()`** — Home `#skills`: `GET /api/public/skills?type=1`
+- **`TechStackStore.loadAdmin()`** — Admin: 4 GET song song (section + statistics + categories + skills), Bearer JWT
+- Mọi entity **luôn có `type: 1`** — FE tự gắn qua `withSectionType()` / `sectionTypeQuery()`
 - Admin badge: **Section type: 1 — Skills**
-- Dialog Add/Edit: FE tự gắn `type: 1`
-- Public: `SkillsComponent` ← `TechStackStore`
+- Dialog Add/Edit: **PUT/POST không gửi `isActive`** — đổi trạng thái qua `PATCH .../{id}/status`
+- Public aggregate trả categories **nested skills** — store flatten về `categories[]` + `skills[]`
+- Xóa category → backend cascade xóa skills; store cũng loại skills khỏi state local
+- API lỗi → fallback mock data (giữ UI chạy được)
 
 ---
 
 ## Checklist Backend Skills
 
-- [ ] `GET /api/public/skills?type=1`
-- [ ] `GET/PUT /api/admin/skills/section?type=1`
-- [ ] CRUD statistics/categories/skills trên `/api/admin/skills/*`
-- [ ] Response luôn include `type: 1`
-- [ ] Reject body `type !== 1`
-- [ ] Cascade delete category → skills
+- [x] `GET /api/public/skills?type=1`
+- [x] `GET/PUT /api/admin/skills/section?type=1`
+- [x] CRUD statistics/categories/skills trên `/api/admin/skills/*`
+- [x] PATCH `.../{id}/status` cho từng collection
+- [x] Response luôn include `type: 1`
+- [x] Reject body `type !== 1`
+- [x] Cascade delete category → skills
+- [x] FE wired (`TechStackService` + `TechStackStore`)
 
 ---
 

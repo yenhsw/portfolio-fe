@@ -70,9 +70,16 @@ export class TechStackComponent implements OnInit {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>';
 
   ngOnInit(): void {
-    this.store.load();
-    this.sectionForm = { ...this.store.section() };
-    setTimeout(() => this.isReady.set(true), 100);
+    this.store.loadAdmin().subscribe({
+      next: () => {
+        this.sectionForm = { ...this.store.section() };
+        this.isReady.set(true);
+      },
+      error: () => {
+        this.sectionForm = { ...this.store.section() };
+        this.isReady.set(true);
+      },
+    });
   }
 
   setTab(tab: TechStackTab): void {
@@ -81,8 +88,10 @@ export class TechStackComponent implements OnInit {
   }
 
   saveSection(): void {
-    this.store.saveSection(this.sectionForm);
-    this.notify.success('TECH STACK section config saved.');
+    this.store.saveSection(this.sectionForm).subscribe({
+      next: () => this.notify.success('TECH STACK section config saved.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to save section config.'),
+    });
   }
 
   openAdd(entity: EntityType): void {
@@ -110,50 +119,47 @@ export class TechStackComponent implements OnInit {
     const id = this.editingId();
     const mode = this.dialogMode();
 
+    let request$: ReturnType<TechStackStore['addStatistic']> | null = null;
+
     if (entity === 'statistics') {
       if (!this.statForm.label.trim()) { this.notify.warning('Please enter item name.'); return; }
       if (this.statForm.sortOrder < 1) { this.notify.warning('Display order must be >= 1.'); return; }
-      if (mode === 'add') {
-        this.store.addStatistic(this.statForm);
-        if (!this.formIsActive) {
-          const added = this.store.statistics().at(-1);
-          if (added) this.store.setStatisticStatus(added.id, false);
-        }
-      } else if (id) {
-        this.store.updateStatistic(id, this.statForm);
-        this.store.setStatisticStatus(id, this.formIsActive);
-      }
+      request$ =
+        mode === 'add'
+          ? this.store.addStatistic(this.statForm, this.formIsActive)
+          : id
+            ? this.store.updateStatistic(id, this.statForm, this.formIsActive)
+            : null;
     } else if (entity === 'categories') {
       if (!this.categoryForm.name.trim()) { this.notify.warning('Please enter category name.'); return; }
       if (this.categoryForm.sortOrder < 1) { this.notify.warning('Display order must be >= 1.'); return; }
-      if (mode === 'add') {
-        this.store.addCategory(this.categoryForm);
-        if (!this.formIsActive) {
-          const added = this.store.categories().at(-1);
-          if (added) this.store.setCategoryStatus(added.id, false);
-        }
-      } else if (id) {
-        this.store.updateCategory(id, this.categoryForm);
-        this.store.setCategoryStatus(id, this.formIsActive);
-      }
+      request$ =
+        mode === 'add'
+          ? this.store.addCategory(this.categoryForm, this.formIsActive)
+          : id
+            ? this.store.updateCategory(id, this.categoryForm, this.formIsActive)
+            : null;
     } else if (entity === 'skills') {
       if (!this.skillForm.name.trim()) { this.notify.warning('Please enter skill name.'); return; }
       if (!this.skillForm.categoryId) { this.notify.warning('Please select a category.'); return; }
       if (this.skillForm.sortOrder < 1) { this.notify.warning('Display order must be >= 1.'); return; }
-      if (mode === 'add') {
-        this.store.addSkill(this.skillForm);
-        if (!this.formIsActive) {
-          const added = this.store.skills().at(-1);
-          if (added) this.store.setSkillStatus(added.id, false);
-        }
-      } else if (id) {
-        this.store.updateSkill(id, this.skillForm);
-        this.store.setSkillStatus(id, this.formIsActive);
-      }
+      request$ =
+        mode === 'add'
+          ? this.store.addSkill(this.skillForm, this.formIsActive)
+          : id
+            ? this.store.updateSkill(id, this.skillForm, this.formIsActive)
+            : null;
     }
 
-    this.notify.success(mode === 'add' ? 'Added successfully.' : 'Updated successfully.');
-    this.closeDialog();
+    if (!request$) return;
+
+    request$.subscribe({
+      next: () => {
+        this.notify.success(mode === 'add' ? 'Added successfully.' : 'Updated successfully.');
+        this.closeDialog();
+      },
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Request failed.'),
+    });
   }
 
   deleteItem(entity: EntityType, id: string): void {
@@ -176,14 +182,23 @@ export class TechStackComponent implements OnInit {
 
   onConfirmDelete(): void {
     if (!this.pendingDelete) return;
+
     const { entity, id } = this.pendingDelete;
-    switch (entity) {
-      case 'statistics': this.store.deleteStatistic(id); break;
-      case 'categories': this.store.deleteCategory(id); break;
-      case 'skills': this.store.deleteSkill(id); break;
-    }
-    this.notify.success('Deleted successfully.');
-    this.closeConfirm();
+    const request$ = (() => {
+      switch (entity) {
+        case 'statistics': return this.store.deleteStatistic(id);
+        case 'categories': return this.store.deleteCategory(id);
+        case 'skills': return this.store.deleteSkill(id);
+      }
+    })();
+
+    request$.subscribe({
+      next: () => {
+        this.notify.success('Deleted successfully.');
+        this.closeConfirm();
+      },
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Delete failed.'),
+    });
   }
 
   closeConfirm(): void {
@@ -193,12 +208,18 @@ export class TechStackComponent implements OnInit {
   }
 
   setStatus(entity: EntityType, id: string, isActive: boolean): void {
-    switch (entity) {
-      case 'statistics': this.store.setStatisticStatus(id, isActive); break;
-      case 'categories': this.store.setCategoryStatus(id, isActive); break;
-      case 'skills': this.store.setSkillStatus(id, isActive); break;
-    }
-    this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.');
+    const request$ = (() => {
+      switch (entity) {
+        case 'statistics': return this.store.setStatisticStatus(id, isActive);
+        case 'categories': return this.store.setCategoryStatus(id, isActive);
+        case 'skills': return this.store.setSkillStatus(id, isActive);
+      }
+    })();
+
+    request$.subscribe({
+      next: () => this.notify.info(isActive ? 'Now visible on Home.' : 'Now hidden from Home.'),
+      error: (err: { message?: string }) => this.notify.error(err.message || 'Failed to update status.'),
+    });
   }
 
   displayStatValue(item: { valueNumber: number; valueSuffix: string }): string {

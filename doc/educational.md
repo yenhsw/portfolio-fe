@@ -9,10 +9,11 @@ Tài liệu chuẩn để **Backend implement API** và **Frontend map dữ li�
 | Public component | `CareerTimelineComponent` |
 | Admin route | `/admin/educational` |
 | Model | `src/app/features/admin/models/educational.model.ts` |
-| Store (mock) | `src/app/features/admin/store/educational.store.ts` |
+| Store | `src/app/features/admin/store/educational.store.ts` |
+| Service | `src/app/features/admin/services/educational.service.ts` |
 | Type constant | `section-type.constants.ts` → `SECTION_API_TYPE = 1` |
 | API constants | `EDUCATIONAL_*` (`/api/admin/educational/*?type=1`) |
-| localStorage key (mock) | `portfolio_educational_data` |
+| Backend doc | `portfolio-api/doc/educational.md` |
 
 > **Phân biệt section:** Hero dùng `/api/admin/hero`, Educational dùng `/api/admin/educational`. Cả hai đều `type: 1`.
 
@@ -224,17 +225,23 @@ Bảng riêng theo module (vd. `educational_section_configs`, `educational_highl
 
 ## Ghi chú triển khai FE
 
-- Store mock: `portfolio_educational_data` — mọi entity có `type: 1`
+- **`EducationalService`** — gọi HTTP theo `portfolio-api/doc/educational.md`
+- **`EducationalStore.load()`** — Home `#career`: `GET /api/public/educational?type=1`
+- **`EducationalStore.loadAdmin()`** — Admin: 5 GET song song (section + 4 collections), Bearer JWT
+- Mọi entity **luôn có `type: 1`** — FE tự gắn qua `withSectionType()` / `sectionTypeQuery()`
 - Admin badge: **Section type: 1 — Educational**
-- Dialog Add/Edit: FE tự gắn `type: 1`, không hiển thị field (giống Hero)
-- Public: `GET EDUCATIONAL_PUBLIC` + `?type=1`
+- Dialog Add/Edit: **PUT/POST không gửi `isActive`** — đổi trạng thái qua `PATCH .../{id}/status`
+- Timeline: backend yêu cầu `technologies` **không rỗng** (`@NotEmpty`)
+- API lỗi → fallback mock data (giữ UI chạy được)
 
 ---
 
 ## Checklist Backend Educational
 
-- [ ] `GET /api/public/educational?type=1`
-- [ ] `GET/PUT /api/admin/educational/section?type=1`
-- [ ] CRUD highlights/timeline/certificates/future-goals trên `/api/admin/educational/*`
-- [ ] Response luôn include `type: 1`
-- [ ] Reject body `type !== 1`
+- [x] `GET /api/public/educational?type=1`
+- [x] `GET/PUT /api/admin/educational/section?type=1`
+- [x] CRUD highlights/timeline/certificates/future-goals trên `/api/admin/educational/*`
+- [x] PATCH `.../{id}/status` cho từng collection
+- [x] Response luôn include `type: 1`
+- [x] Reject body `type !== 1`
+- [x] FE wired (`EducationalService` + `EducationalStore`)
